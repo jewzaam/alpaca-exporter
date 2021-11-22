@@ -170,6 +170,7 @@ if __name__ == '__main__':
                     # verify this is a valid device.
                     # if it cannot be found, skip it.. it might come online later
                     name = getValue(alpaca_base_url, device_type, device_number, "name", None)
+                    metrics_current.append(["alpaca_device_connected",labels])
                     if not name:
                         utility.set("alpaca_device_connected", 0, labels)
                         continue
@@ -177,6 +178,7 @@ if __name__ == '__main__':
                         utility.set("alpaca_device_connected", 1, labels)
                         labels.update({"name": name})
                         utility.set("alpaca_device_name", 1, labels)
+                        metrics_current.append(["alpaca_device_name",labels])
 
                     metric_prefix = ""
                     if "metric_prefix" in c:
