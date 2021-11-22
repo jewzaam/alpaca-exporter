@@ -4,6 +4,7 @@ import json
 import os
 import time
 import requests
+import copy
 from cachetools import cached, TTLCache
 
 import httpimport
@@ -170,7 +171,7 @@ if __name__ == '__main__':
                     # verify this is a valid device.
                     # if it cannot be found, skip it.. it might come online later
                     name = getValue(alpaca_base_url, device_type, device_number, "name", None)
-                    metrics_current.append(["alpaca_device_connected",labels])
+                    metrics_current.append(["alpaca_device_connected", copy.deepcopy(labels)])
                     if not name:
                         utility.set("alpaca_device_connected", 0, labels)
                         continue
@@ -178,7 +179,7 @@ if __name__ == '__main__':
                         utility.set("alpaca_device_connected", 1, labels)
                         labels.update({"name": name})
                         utility.set("alpaca_device_name", 1, labels)
-                        metrics_current.append(["alpaca_device_name",labels])
+                        metrics_current.append(["alpaca_device_name",copy.deepcopy(labels)])
 
                     metric_prefix = ""
                     if "metric_prefix" in c:
@@ -243,7 +244,7 @@ if __name__ == '__main__':
                             # if it's none but there is no prior value it will fail, ignore this
                             try:
                                 utility.set(metric_name, metric_value, labels)
-                                metrics_current.append([metric_name,labels])
+                                metrics_current.append([metric_name,copy.deepcopy(labels)])
                             except:
                                 pass
 
@@ -271,15 +272,18 @@ if __name__ == '__main__':
             pass
 
         # handle cleanup of metrics.  this is the case when something stops reporting and we do not want stale metric.
-        for m in metrics_previous:
-            # if the cache has a value we didn't just collect we must remove the metric
-            if m not in metrics_current:
-                metric_name=m[0]
-                labels=m[1]
-                debug(f"DEBUG: removing metric.  metric_name={metric_name}, labels={labels}")
-                # wipe the metric
-                utility.set(metric_name, None, labels)
-        
-        metrics_previous = metrics_current
+        try:
+            for m in metrics_previous:
+                # if the cache has a value we didn't just collect we must remove the metric
+                if m not in metrics_current:
+                    metric_name=m[0]
+                    labels=m[1]
+                    debug(f"DEBUG: removing metric.  metric_name={metric_name}, labels={labels}")
+                    # wipe the metric
+                    utility.set(metric_name, None, labels)
+            metrics_previous = metrics_current
+        except Exception as e:
+            print(e)
+            pass
 
         time.sleep(int(refresh_rate))
