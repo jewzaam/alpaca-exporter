@@ -1,0 +1,229 @@
+groups:
+  - name: device:camera
+    rules:
+    - record: device:camera:is_connected
+      expr: clamp(rate(alpaca_device_connected{device_type="camera"}[1m]),1,1)
+    - record: device:camera:was_connected
+      expr: clamp(rate(alpaca_device_connected{device_type="camera"}[30m])>0,1,1)
+
+  - name: device:covercalibrator
+    rules:
+    - record: device:covercalibrator:is_connected
+      expr: clamp(rate(alpaca_device_connected{device_type="covercalibrator"}[1m]),1,1)
+    - record: device:covercalibrator:was_connected
+      expr: clamp(rate(alpaca_device_connected{device_type="covercalibrator"}[30m])>0,1,1)
+
+  - name: device:dome
+    rules:
+    - record: device:dome:is_connected
+      expr: clamp(rate(alpaca_device_connected{device_type="dome"}[1m]),1,1)
+    - record: device:dome:was_connected
+      expr: clamp(rate(alpaca_device_connected{device_type="dome"}[30m])>0,1,1)
+    - record: device:dome:is_open
+      expr: alpaca_dome_shutterstatus != 1 # 0 = Open, 1 = Closed, 2 = Opening, 3 = Closing, 4 = Shutter status error
+
+  - name: device:filterwheel
+    rules:
+    - record: device:filterwheel:is_connected
+      expr: clamp(rate(alpaca_device_connected{device_type="filterwheel"}[1m]),1,1)
+    - record: device:filterwheel:was_connected
+      expr: clamp(rate(alpaca_device_connected{device_type="filterwheel"}[30m])>0,1,1)
+
+  - name: device:focuser
+    rules:
+    - record: device:focuser:is_connected
+      expr: clamp(rate(alpaca_device_connected{device_type="focuser"}[1m]),1,1)
+    - record: device:focuser:was_connected
+      expr: clamp(rate(alpaca_device_connected{device_type="focuser"}[30m])>0,1,1)
+
+  - name: device:observingcondition
+    rules:
+    - record: device:observingcondition:is_connected
+      expr: clamp(rate(alpaca_device_connected{device_type="observingcondition"}[1m]),1,1)
+    - record: device:observingcondition:was_connected
+      expr: clamp(rate(alpaca_device_connected{device_type="observingcondition"}[30m])>0,1,1)
+
+  - name: device:rotator
+    rules:
+    - record: device:rotator:is_connected
+      expr: clamp(rate(alpaca_device_connected{device_type="rotator"}[1m]),1,1)
+    - record: device:rotator:was_connected
+      expr: clamp(rate(alpaca_device_connected{device_type="rotator"}[30m])>0,1,1)
+
+  - name: device:safetymonitor
+    rules:
+    - record: device:safetymonitor:is_connected
+      expr: clamp(rate(alpaca_device_connected{device_type="safetymonitor"}[1m]),1,1)
+    - record: device:safetymonitor:was_connected
+      expr: clamp(rate(alpaca_device_connected{device_type="safetymonitor"}[30m])>0,1,1)
+
+  - name: device:switch
+    rules:
+    - record: device:switch:is_connected
+      expr: clamp(rate(alpaca_device_connected{device_type="switch"}[1m]),1,1)
+    - record: device:switch:was_connected
+      expr: clamp(rate(alpaca_device_connected{device_type="switch"}[30m])>0,1,1)
+
+  - name: device:telescope
+    rules:
+    - record: device:telescope:is_connected
+      expr: clamp(rate(alpaca_device_connected{device_type="telescope"}[1m]),1,1)
+    - record: device:telescope:was_connected
+      expr: clamp(rate(alpaca_device_connected{device_type="telescope"}[30m])>0,1,1)
+    - record: device:telescope:side_of_pier
+      expr: alpaca_telescope_sideofpier
+    - record: device:telescope:is_tracking
+      expr: alpaca_telescope_tracking
+    - record: device:telescope:azimuth
+      expr: alpaca_telescope_azimuth
+    - record: device:telescope:altitude
+      expr: alpaca_telescope_altitude
+    - record: device:telescope:dec
+      expr: alpaca_telescope_declination
+    - record: device:telescope:ra
+      expr: alpaca_telescope_rightascension
+    - record: device:telescope:meridian_flip_needed
+      expr: device:telescope:is_tracking  * on(host,device_number)
+            device:telescope:side_of_pier * on(host,device_number)
+            device:telescope:azimuth
+
+  - name: device:alerts
+    rules:
+
+    - alert: CameraDisconnected
+      expr: device:camera:was_connected > 0 AND on(host,device_number)
+            device:camera:is_connected == 0 AND on(host)
+            device:telescope:is_connected > 0
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        message: Camera "{{ .Labels.Name }}" on host "{{ .Labels.Host }}" has disconnected.
+
+    - alert: DomeDisconnected
+      expr: device:dome:was_connected > 0 AND on(host,device_number)
+            device:dome:is_connected == 0 AND on(host)
+            device:dome:is_open > 0
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        message: Dome "{{ .Labels.Name }}" on host "{{ .Labels.Host }}" has disconnected.
+
+    - alert: FilterWheelDisconnected
+      expr: device:filterwheel:was_connected > 0 AND on(host,device_number)
+            device:filterwheel:is_connected == 0 AND on(host)
+            device:camera:is_connected > 0
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        message: Filter wheel "{{ .Labels.Name }}" on host "{{ .Labels.Host }}" has disconnected.
+
+    - alert: FocuserDisconnected
+      expr: device:focuser:was_connected > 0 AND on(host,device_number)
+            device:focuser:is_connected == 0 AND on(host)
+            device:camera:is_connected > 0
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        message: Focuser "{{ .Labels.Name }}" on host "{{ .Labels.Host }}" has disconnected.
+
+    - alert: ObservingConditionDisconnected
+      expr: device:observingcondition:was_connected > 0 AND on(host,device_number)
+            device:observingcondition:is_connected == 0 AND on(host)
+            device:telescope:is_connected > 0
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        message: Observing condition "{{ .Labels.Name }}" on host "{{ .Labels.Host }}" has disconnected.
+
+    - alert: RotatorDisconnected
+      expr: device:rotator:was_connected > 0 AND on(host,device_number)
+            device:rotator:is_connected == 0 AND on(host)
+            device:camera:is_connected > 0
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        message: Rotator "{{ .Labels.Name }}" on host "{{ .Labels.Host }}" has disconnected.
+
+    - alert: SafetyMonitorDisconnected
+      expr: device:safetymonitor:was_connected > 0 AND on(host,device_number)
+            device:safetymonitor:is_connected == 0 AND on(host)
+            device:telescope:is_connected > 0
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        message: Safety monitor "{{ .Labels.Name }}" on host "{{ .Labels.Host }}" has disconnected.
+
+    - alert: SwitchDisconnected
+      expr: device:switch:was_connected > 0 AND on(host,device_number)
+            device:switch:is_connected == 0 AND on(host)
+            device:telescope:is_connected > 0
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        message: Switch "{{ .Labels.Name }}" on host "{{ .Labels.Host }}" has disconnected.
+
+    - alert: TelescopeDisconnected
+      expr: device:telescope:was_connected > 0 AND on(host,device_number)
+            device:telescope:is_connected == 0 AND on(host)
+            device:camera:is_connected > 0
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        message: Telescope "{{ .Labels.Name }}" on host "{{ .Labels.Host }}" has disconnected.
+
+    - alert: TelescopeMeridianFlipMissed
+      expr: device:telescope:meridian_flip_needed
+      for: 15m
+      labels:
+        severity: critical
+      annotations:
+        message: Meridian flip was missed and scope is still tracking.  Stop tracking or force a flip.
+
+    - alert: TelescopeBelowHorizon
+      expr: device:telescope:is_tracking * on(host,device_number) 
+            device:telescope:altitude < 0
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        message: Telescope is below horizion and tracking.  This is unusual and should be stopped.
+
+
+    - alert: TelescopeSideOfPierFailure
+      expr: device:telescope:is_connected * on(host,device_number) 
+            absent(device:telescope:side_of_pier}
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        message: |
+          Telescope "{{ .Labels.Name }}" on host "{{ .Labels.Host }}" is not reporting "Side of Pier".
+          This indicates failure in the ASCOM driver.
+          Reboot the computer and reconnect devices.
+
+    - alert: DeviceConnectionFailure
+      expr: alpaca_device_connected == 0
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        message: |
+          Unable to connect to {{ .Labels.device_type }}/{{ .Labels.device_number }}.  Verify it is connected.
+
+    - alert: DeviceConnectionFailure
+      expr: alpaca_device_connected == 0
+      for: 15m
+      labels:
+        severity: critical
+      annotations:
+        message: |
+          Unable to connect to {{ .Labels.device_type }}/{{ .Labels.device_number }}.  Verify it is connected.

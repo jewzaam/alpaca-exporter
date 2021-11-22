@@ -5,7 +5,9 @@ Export metrics from ASCOM devices via Alpaca in a form that Prometheus can scrap
 ## Setup
 
 1. install requirements
-1. connect all devices, make sure they're setup in ASCOM and ASCOM Remote
+2. install all ASCOM drivers needed
+3. install Alpaca (ASCOM Remote)
+4. configure ASCOM Remote
 
 ```shell
 # install required modules
