@@ -1,0 +1,42 @@
+# for more attributes, see https://www.ascom-standards.org/api/#/
+
+# prefix for all telescope metric names
+metric_prefix: alpaca_telescope_
+
+# labels common to all telescope metrics (really not needed...)
+labels:
+- alpaca_name: sitelatitude
+  label_name: latitude
+  cached: 1
+- alpaca_name: sitelongitude
+  label_name: longitude
+  cached: 1
+
+# all exported metrics.
+# properties are: alpaca_name, metric_name, at_startup_only
+# metric_name defaults to alpaca_name and is always prepended with metric_prefix
+# cache_ttl is time for value to be cached in seconds.  default to 0 (no cache).
+metrics:
+- alpaca_name: altitude
+- alpaca_name: azimuth
+- alpaca_name: declination
+- alpaca_name: declinationrate
+  metric_name: declination_rate
+  cached: 1
+- alpaca_name: rightascension
+- alpaca_name: rightascensionrate
+  metric_name: rightascension_rate
+  cached: 1
+- alpaca_name: sideofpier
+  cached: 1
+- alpaca_name: siteelevation
+  cached: 1
+- alpaca_name: sitelatitude
+  cached: 1
+- alpaca_name: sitelongitude
+  cached: 1
+- alpaca_name: slewing
+- alpaca_name: tracking
+- alpaca_name: trackingrate
+  metric_name: tracking_rate
+  cached: 1

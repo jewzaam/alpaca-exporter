@@ -1,0 +1,10 @@
+# attributes: alpaca_name, label_name
+# label_name defaults to alpaca_name
+labels:
+- alpaca_name: name
+  cached: 1
+- alpaca_name: description
+  cached: 1
+- alpaca_name: driverversion
+  label_name: driver_version
+  cached: 1

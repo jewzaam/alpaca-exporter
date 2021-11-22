@@ -1,0 +1,31 @@
+# for more attributes, see https://www.ascom-standards.org/api/#/
+
+# prefix for all observingcondition metric names
+metric_prefix: alpaca_observingcondition_
+
+# labels common to all observingcondition metrics
+labels:
+- alpaca_name: sensordescription
+  cached: 1
+
+# all exported metrics.
+# properties are: alpaca_name, metric_name, at_startup_only
+# metric_name defaults to alpaca_name and is always prepended with metric_prefix
+# cache_ttl is time for value to be cached in seconds.  default to 0 (no cache).
+metrics:
+- alpaca_name: averageperiod
+  cached: 1
+- alpaca_name: cloudcover
+- alpaca_name: dewpoint
+- alpaca_name: humidity
+- alpaca_name: pressure
+- alpaca_name: rainrate
+- alpaca_name: skybrightness
+- alpaca_name: skyquality
+- alpaca_name: skytemperature
+- alpaca_name: skyfwhm
+- alpaca_name: temperature
+- alpaca_name: winddirection
+- alpaca_name: windguest
+- alpaca_name: windspeed
+- alpaca_name: timesincelastupdate

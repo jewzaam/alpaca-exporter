@@ -1,0 +1,30 @@
+# for more attributes, see https://www.ascom-standards.org/api/#/
+
+#######################################################
+# SWITCH is a special case metric!
+#
+# A switch has multiple values.
+# We get the number of values from maxswitch.
+# A special label "id" is added along with other data.
+#######################################################
+
+
+# prefix for all switch metric names
+metric_prefix: alpaca_switch_
+
+# labels common to all switch metrics (really not needed...)
+labels:
+- alpaca_name: getswitchdescription
+  label_name: switchdescription
+  cached: 1
+- alpaca_name: getswitchname
+  label_name: switchname
+  cached: 1
+
+# all exported metrics.
+# properties are: alpaca_name, metric_name, at_startup_only
+# metric_name defaults to alpaca_name and is always prepended with metric_prefix
+# cache_ttl is time for value to be cached in seconds.  default to 0 (no cache).
+metrics:
+- alpaca_name: getswitchvalue
+  metric_name: switchvalue

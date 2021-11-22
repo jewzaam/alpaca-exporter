@@ -1,0 +1,18 @@
+# for more attributes, see https://www.ascom-standards.org/api/#/
+
+# prefix for all dome metric names
+metric_prefix: alpaca_dome_
+
+# all exported metrics.
+# properties are: alpaca_name, metric_name, at_startup_only
+# metric_name defaults to alpaca_name and is always prepended with metric_prefix
+# cache_ttl is time for value to be cached in seconds.  default to 0 (no cache).
+metrics:
+- alpaca_name: altitude
+  cached: 1
+- alpaca_name: azimuth
+  cached: 1
+- alpaca_name: shutterstatus # 0 = Open, 1 = Closed, 2 = Opening, 3 = Closing, 4 = Shutter status error
+- alpaca_name: slaved
+  cached: 1
+- alpaca_name: slewing
