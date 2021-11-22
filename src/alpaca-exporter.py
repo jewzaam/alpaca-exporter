@@ -135,6 +135,10 @@ if __name__ == '__main__':
     
         time.sleep(int(refresh_rate))
 
+    if len(devices) == 0:
+        print(f"ERROR: no devices configured, must supply at least one of: {device_types}")
+        os._exit(-1)
+
     loadConfigurations("config/")
 
     # verify user input for devices
@@ -171,6 +175,8 @@ if __name__ == '__main__':
                         continue
                     else:
                         utility.set("alpaca_device_connected", 1, labels)
+                        labels.update({"name": name})
+                        utility.set("alpaca_device_name", 1, labels)
 
                     metric_prefix = ""
                     if "metric_prefix" in c:
