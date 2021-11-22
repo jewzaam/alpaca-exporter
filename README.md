@@ -92,4 +92,4 @@ PR's welcome!  The `config/` directory contains all the configurations.  Everyth
 
 ## Switch Configuration
 
-Unfortunetly switches are special.  There is an `id` query path param required for getting the individual switch device metrics.  This is managed in the exporter code and you do not have to worry about it in the configuration.  The downside is every switch device is queried, which may result in higher traffic.
+Unfortunetly switches are special.  There is an `id` query param required for getting the individual switch device metrics.  This is managed in the exporter code and you do not have to worry about it in the configuration.  The downside is every switch device is queried, which may result in higher traffic.

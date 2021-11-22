@@ -5,12 +5,8 @@ groups:
       expr: clamp(rate(alpaca_device_connected{device_type="camera"}[1m]),1,1)
     - record: device:camera:was_connected
       expr: clamp(rate(alpaca_device_connected{device_type="camera"}[30m])>0,1,1)
-    - record: device:camera:temperature_setpoint
-      expr: alpaca_camera_temperature_setpoint
-    - record: device:camera:temperature_ambient
-      expr: alpaca_camera_temperature_ambient
-    - record: device:camera:is_cooling
-      expr: alpaca_camera_cooling
+    - record: device:camera:temperature
+      expr: alpaca_camera_ccdtemperature
 
   - name: device:covercalibrator
     rules:
@@ -34,6 +30,8 @@ groups:
       expr: clamp(rate(alpaca_device_connected{device_type="filterwheel"}[1m]),1,1)
     - record: device:filterwheel:was_connected
       expr: clamp(rate(alpaca_device_connected{device_type="filterwheel"}[30m])>0,1,1)
+    - record: device:filterwheel:position
+      expr: alpaca_filterwheel_position
 
   - name: device:focuser
     rules:
@@ -41,6 +39,8 @@ groups:
       expr: clamp(rate(alpaca_device_connected{device_type="focuser"}[1m]),1,1)
     - record: device:focuser:was_connected
       expr: clamp(rate(alpaca_device_connected{device_type="focuser"}[30m])>0,1,1)
+    - record: device:focuser:position
+      expr: alpaca_focuser_position
 
   - name: device:observingcondition
     rules:
@@ -55,6 +55,8 @@ groups:
       expr: clamp(rate(alpaca_device_connected{device_type="rotator"}[1m]),1,1)
     - record: device:rotator:was_connected
       expr: clamp(rate(alpaca_device_connected{device_type="rotator"}[30m])>0,1,1)
+    - record: device:rotator:position
+      expr: alpaca_rotator_position_current
 
   - name: device:safetymonitor
     rules:
@@ -62,6 +64,8 @@ groups:
       expr: clamp(rate(alpaca_device_connected{device_type="safetymonitor"}[1m]),1,1)
     - record: device:safetymonitor:was_connected
       expr: clamp(rate(alpaca_device_connected{device_type="safetymonitor"}[30m])>0,1,1)
+    - record: device:safetymonitor:is_safe
+      expr: alpaca_safetymonitor_issafe
 
   - name: device:switch
     rules:
@@ -247,3 +251,12 @@ groups:
       annotations:
         message: |
           Unable to connect to {{ .Labels.device_type }}/{{ .Labels.device_number }}.  Verify it is connected.
+
+    - alert: CameraDuplicateConfiguration
+      expr: count by(name) (alpaca_device_connected * on(host,device_type,device_number) group_right alpaca_camera_ccdtemperature) > 1
+      labels:
+        severity: critical
+      annotations:
+        message: |
+          More than one camera configured with the same name.  Check ASCOM configuration for each device.  
+          Restart metric exporter to clear alert unless device changes are handled gracefully.

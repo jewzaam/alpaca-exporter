@@ -8,10 +8,4 @@ metric_prefix: alpaca_filterwheel_
 # metric_name defaults to alpaca_name and is always prepended with metric_prefix
 # cache_ttl is time for value to be cached in seconds.  default to 0 (no cache).
 metrics:
-- alpaca_name: ismoving
-- alpaca_name: maxincrement
-  cached: 1
 - alpaca_name: position
-- alpaca_name: stepsize
-  cached: 1
-- alpaca_name: temperature

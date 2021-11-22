@@ -12,9 +12,5 @@ metrics:
   metric_name: cooling
 - alpaca_name: coolerpower
 - alpaca_name: gain
-- alpaca_name: lastexposureduration
 - alpaca_name: offset
-- alpaca_name: setccdtemperature
-  metric_name: temperature_setpoint
-- alpaca_name: heatsinktemperature
-  metric_name: temperature_ambient
+- alpaca_name: ccdtemperature
