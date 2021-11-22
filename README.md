@@ -72,6 +72,7 @@ And the `metric_prefix` is prepended.  For example, the `alpaca_telescope_tracki
 ```yaml
 metric_prefix: alpaca_telescope_
 
+metrics:
 - alpaca_name: trackingrate
   metric_name: tracking_rate
   cached: 1
