@@ -5,6 +5,12 @@ groups:
       expr: clamp(rate(alpaca_device_connected{device_type="camera"}[1m]),1,1)
     - record: device:camera:was_connected
       expr: clamp(rate(alpaca_device_connected{device_type="camera"}[30m])>0,1,1)
+    - record: device:camera:temperature_setpoint
+      expr: alpaca_camera_temperature_setpoint
+    - record: device:camera:temperature_ambient
+      expr: alpaca_camera_temperature_ambient
+    - record: device:camera:is_cooling
+      expr: alpaca_camera_cooling
 
   - name: device:covercalibrator
     rules:
@@ -63,6 +69,20 @@ groups:
       expr: clamp(rate(alpaca_device_connected{device_type="switch"}[1m]),1,1)
     - record: device:switch:was_connected
       expr: clamp(rate(alpaca_device_connected{device_type="switch"}[30m])>0,1,1)
+    - record: device:switch:DewA
+      expr: alpaca_switch_switchvalue{switchname="Current"}
+    - record: device:switch:DewB
+      expr: alpaca_switch_switchvalue{switchname="DewB"}
+    - record: device:switch:Temperature
+      expr: alpaca_switch_switchvalue{switchname="Temperature"}
+    - record: device:switch:Humidity
+      expr: alpaca_switch_switchvalue{switchname="Humidity"}
+    - record: device:switch:DewPoint
+      expr: alpaca_switch_switchvalue{switchname="Dew Point"}
+    - record: device:switch:Voltage
+      expr: alpaca_switch_switchvalue{switchname="Voltage"}
+    - record: device:switch:Current
+      expr: alpaca_switch_switchvalue{switchname="Current"}
 
   - name: device:telescope
     rules:
