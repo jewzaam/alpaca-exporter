@@ -109,4 +109,4 @@ groups:
     - record: device:telescope:meridian_flip_needed
       expr: clamp(device:telescope:is_tracking  * on(host,device_number)
             device:telescope:side_of_pier * on(host,device_number)
-            device:telescope:azimuth,0,1)
+            device:telescope:azimuth>180,0,1)
