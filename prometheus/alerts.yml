@@ -1,116 +1,4 @@
 groups:
-  - name: device:camera
-    rules:
-    - record: device:camera:is_connected
-      expr: clamp(rate(alpaca_device_connected{device_type="camera"}[1m]),1,1)
-    - record: device:camera:was_connected
-      expr: clamp(rate(alpaca_device_connected{device_type="camera"}[30m])>0,1,1)
-    - record: device:camera:temperature
-      expr: alpaca_camera_ccdtemperature
-
-  - name: device:covercalibrator
-    rules:
-    - record: device:covercalibrator:is_connected
-      expr: clamp(rate(alpaca_device_connected{device_type="covercalibrator"}[1m]),1,1)
-    - record: device:covercalibrator:was_connected
-      expr: clamp(rate(alpaca_device_connected{device_type="covercalibrator"}[30m])>0,1,1)
-
-  - name: device:dome
-    rules:
-    - record: device:dome:is_connected
-      expr: clamp(rate(alpaca_device_connected{device_type="dome"}[1m]),1,1)
-    - record: device:dome:was_connected
-      expr: clamp(rate(alpaca_device_connected{device_type="dome"}[30m])>0,1,1)
-    - record: device:dome:is_open
-      expr: alpaca_dome_shutterstatus != 1 # 0 = Open, 1 = Closed, 2 = Opening, 3 = Closing, 4 = Shutter status error
-
-  - name: device:filterwheel
-    rules:
-    - record: device:filterwheel:is_connected
-      expr: clamp(rate(alpaca_device_connected{device_type="filterwheel"}[1m]),1,1)
-    - record: device:filterwheel:was_connected
-      expr: clamp(rate(alpaca_device_connected{device_type="filterwheel"}[30m])>0,1,1)
-    - record: device:filterwheel:position
-      expr: alpaca_filterwheel_position
-
-  - name: device:focuser
-    rules:
-    - record: device:focuser:is_connected
-      expr: clamp(rate(alpaca_device_connected{device_type="focuser"}[1m]),1,1)
-    - record: device:focuser:was_connected
-      expr: clamp(rate(alpaca_device_connected{device_type="focuser"}[30m])>0,1,1)
-    - record: device:focuser:position
-      expr: alpaca_focuser_position
-
-  - name: device:observingcondition
-    rules:
-    - record: device:observingcondition:is_connected
-      expr: clamp(rate(alpaca_device_connected{device_type="observingcondition"}[1m]),1,1)
-    - record: device:observingcondition:was_connected
-      expr: clamp(rate(alpaca_device_connected{device_type="observingcondition"}[30m])>0,1,1)
-
-  - name: device:rotator
-    rules:
-    - record: device:rotator:is_connected
-      expr: clamp(rate(alpaca_device_connected{device_type="rotator"}[1m]),1,1)
-    - record: device:rotator:was_connected
-      expr: clamp(rate(alpaca_device_connected{device_type="rotator"}[30m])>0,1,1)
-    - record: device:rotator:position
-      expr: alpaca_rotator_position_current
-
-  - name: device:safetymonitor
-    rules:
-    - record: device:safetymonitor:is_connected
-      expr: clamp(rate(alpaca_device_connected{device_type="safetymonitor"}[1m]),1,1)
-    - record: device:safetymonitor:was_connected
-      expr: clamp(rate(alpaca_device_connected{device_type="safetymonitor"}[30m])>0,1,1)
-    - record: device:safetymonitor:is_safe
-      expr: alpaca_safetymonitor_issafe
-
-  - name: device:switch
-    rules:
-    - record: device:switch:is_connected
-      expr: clamp(rate(alpaca_device_connected{device_type="switch"}[1m]),1,1)
-    - record: device:switch:was_connected
-      expr: clamp(rate(alpaca_device_connected{device_type="switch"}[30m])>0,1,1)
-    - record: device:switch:DewA
-      expr: alpaca_switch_switchvalue{switchname="Current"}
-    - record: device:switch:DewB
-      expr: alpaca_switch_switchvalue{switchname="DewB"}
-    - record: device:switch:Temperature
-      expr: alpaca_switch_switchvalue{switchname="Temperature"}
-    - record: device:switch:Humidity
-      expr: alpaca_switch_switchvalue{switchname="Humidity"}
-    - record: device:switch:DewPoint
-      expr: alpaca_switch_switchvalue{switchname="Dew Point"}
-    - record: device:switch:Voltage
-      expr: alpaca_switch_switchvalue{switchname="Voltage"}
-    - record: device:switch:Current
-      expr: alpaca_switch_switchvalue{switchname="Current"}
-
-  - name: device:telescope
-    rules:
-    - record: device:telescope:is_connected
-      expr: clamp(rate(alpaca_device_connected{device_type="telescope"}[1m]),1,1)
-    - record: device:telescope:was_connected
-      expr: clamp(rate(alpaca_device_connected{device_type="telescope"}[30m])>0,1,1)
-    - record: device:telescope:side_of_pier
-      expr: alpaca_telescope_sideofpier
-    - record: device:telescope:is_tracking
-      expr: alpaca_telescope_tracking
-    - record: device:telescope:azimuth
-      expr: alpaca_telescope_azimuth
-    - record: device:telescope:altitude
-      expr: alpaca_telescope_altitude
-    - record: device:telescope:dec
-      expr: alpaca_telescope_declination
-    - record: device:telescope:ra
-      expr: alpaca_telescope_rightascension
-    - record: device:telescope:meridian_flip_needed
-      expr: device:telescope:is_tracking  * on(host,device_number)
-            device:telescope:side_of_pier * on(host,device_number)
-            device:telescope:azimuth
-
   - name: device:alerts
     rules:
 
@@ -260,3 +148,30 @@ groups:
         message: |
           More than one camera configured with the same name.  Check ASCOM configuration for each device.  
           Restart metric exporter to clear alert unless device changes are handled gracefully.
+
+    - alert: HighCurrentSpike
+      expr: device:switch:is_connected AND on(host,device_number)
+            max_over_time(device:switch:Current[30s]) - on(host,device_number,id) avg_over_time(device:switch:Current[1h]) > 1
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        message: There's a sustained spike in current relative to the average draw.
+
+    - alert: VoltageLow
+      expr: device:switch:is_connected AND on(host,device_number)
+            device:switch:Voltage < 12
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        message: Switch voltage output is low!
+
+    - alert: VoltageLow
+      expr: device:switch:is_connected AND on(host,device_number)
+            device:switch:Voltage > 13
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        message: Switch voltage output is high!

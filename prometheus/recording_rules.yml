@@ -1,0 +1,112 @@
+groups:
+  - name: device:camera
+    rules:
+    - record: device:camera:is_connected
+      expr: max_over_time(alpaca_device_connected{device_type="camera"}[1m])
+    - record: device:camera:was_connected
+      expr: max_over_time(alpaca_device_connected{device_type="camera"}[30m])
+    - record: device:camera:temperature
+      expr: alpaca_camera_ccdtemperature
+
+  - name: device:covercalibrator
+    rules:
+    - record: device:covercalibrator:is_connected
+      expr: max_over_time(alpaca_device_connected{device_type="covercalibrator"}[1m])
+    - record: device:covercalibrator:was_connected
+      expr: max_over_time(alpaca_device_connected{device_type="covercalibrator"}[30m])
+
+  - name: device:dome
+    rules:
+    - record: device:dome:is_connected
+      expr: max_over_time(alpaca_device_connected{device_type="dome"}[1m])
+    - record: device:dome:was_connected
+      expr: max_over_time(alpaca_device_connected{device_type="dome"}[30m])
+    - record: device:dome:is_open
+      expr: alpaca_dome_shutterstatus != 1 # 0 = Open, 1 = Closed, 2 = Opening, 3 = Closing, 4 = Shutter status error
+
+  - name: device:filterwheel
+    rules:
+    - record: device:filterwheel:is_connected
+      expr: max_over_time(alpaca_device_connected{device_type="filterwheel"}[1m])
+    - record: device:filterwheel:was_connected
+      expr: max_over_time(alpaca_device_connected{device_type="filterwheel"}[30m])
+    - record: device:filterwheel:position
+      expr: alpaca_filterwheel_position
+
+  - name: device:focuser
+    rules:
+    - record: device:focuser:is_connected
+      expr: max_over_time(alpaca_device_connected{device_type="focuser"}[1m])
+    - record: device:focuser:was_connected
+      expr: max_over_time(alpaca_device_connected{device_type="focuser"}[30m])
+    - record: device:focuser:position
+      expr: alpaca_focuser_position
+
+  - name: device:observingcondition
+    rules:
+    - record: device:observingcondition:is_connected
+      expr: max_over_time(alpaca_device_connected{device_type="observingcondition"}[1m])
+    - record: device:observingcondition:was_connected
+      expr: max_over_time(alpaca_device_connected{device_type="observingcondition"}[30m])
+
+  - name: device:rotator
+    rules:
+    - record: device:rotator:is_connected
+      expr: max_over_time(alpaca_device_connected{device_type="rotator"}[1m])
+    - record: device:rotator:was_connected
+      expr: max_over_time(alpaca_device_connected{device_type="rotator"}[30m])
+    - record: device:rotator:position
+      expr: alpaca_rotator_position_current
+
+  - name: device:safetymonitor
+    rules:
+    - record: device:safetymonitor:is_connected
+      expr: max_over_time(alpaca_device_connected{device_type="safetymonitor"}[1m])
+    - record: device:safetymonitor:was_connected
+      expr: max_over_time(alpaca_device_connected{device_type="safetymonitor"}[30m])
+    - record: device:safetymonitor:is_safe
+      expr: alpaca_safetymonitor_issafe
+
+  - name: device:switch
+    rules:
+    - record: device:switch:is_connected
+      expr: max_over_time(alpaca_device_connected{device_type="switch"}[1m])
+    - record: device:switch:was_connected
+      expr: max_over_time(alpaca_device_connected{device_type="switch"}[30m])
+    - record: device:switch:DewA
+      expr: alpaca_switch_switchvalue{switchname="Current"}
+    - record: device:switch:DewB
+      expr: alpaca_switch_switchvalue{switchname="DewB"}
+    - record: device:switch:Temperature
+      expr: alpaca_switch_switchvalue{switchname="Temperature"}
+    - record: device:switch:Humidity
+      expr: alpaca_switch_switchvalue{switchname="Humidity"}
+    - record: device:switch:DewPoint
+      expr: alpaca_switch_switchvalue{switchname="Dew Point"}
+    - record: device:switch:Voltage
+      expr: alpaca_switch_switchvalue{switchname="Voltage"}
+    - record: device:switch:Current
+      expr: alpaca_switch_switchvalue{switchname="Current"}
+
+  - name: device:telescope
+    rules:
+    - record: device:telescope:is_connected
+      expr: max_over_time(alpaca_device_connected{device_type="telescope"}[1m])
+    - record: device:telescope:was_connected
+      expr: max_over_time(alpaca_device_connected{device_type="telescope"}[30m])
+    - record: device:telescope:side_of_pier
+      expr: alpaca_telescope_sideofpier
+    - record: device:telescope:is_tracking
+      expr: alpaca_telescope_tracking
+    - record: device:telescope:azimuth
+      expr: alpaca_telescope_azimuth
+    - record: device:telescope:altitude
+      expr: alpaca_telescope_altitude
+    - record: device:telescope:dec
+      expr: alpaca_telescope_declination
+    - record: device:telescope:ra
+      expr: alpaca_telescope_rightascension
+    - record: device:telescope:meridian_flip_needed
+      expr: clamp(device:telescope:is_tracking  * on(host,device_number)
+            device:telescope:side_of_pier * on(host,device_number)
+            device:telescope:azimuth,0,1)
