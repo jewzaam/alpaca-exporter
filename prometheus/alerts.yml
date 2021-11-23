@@ -93,7 +93,7 @@ groups:
         message: Telescope "{{ .Labels.Name }}" on host "{{ .Labels.Host }}" has disconnected.
 
     - alert: TelescopeMeridianFlipMissed
-      expr: device:telescope:meridian_flip_needed
+      expr: device:telescope:meridian_flip_needed > 0
       for: 15m
       labels:
         severity: critical
