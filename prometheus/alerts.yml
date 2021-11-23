@@ -112,7 +112,7 @@ groups:
 
     - alert: TelescopeSideOfPierFailure
       expr: device:telescope:is_connected * on(host,device_number) 
-            absent(device:telescope:side_of_pier}
+            absent(device:telescope:side_of_pier)
       for: 1m
       labels:
         severity: critical
@@ -167,7 +167,7 @@ groups:
       annotations:
         message: Switch voltage output is low!
 
-    - alert: VoltageLow
+    - alert: VoltageHigh
       expr: device:switch:is_connected AND on(host,device_number)
             device:switch:Voltage > 13
       for: 1m
