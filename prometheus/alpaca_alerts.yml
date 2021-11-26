@@ -93,7 +93,7 @@ groups:
         message: Telescope "{{ .Labels.Name }}" on host "{{ .Labels.Host }}" has disconnected.
 
     - alert: TelescopeMeridianFlipMissed
-      expr: device:telescope:meridian_flip_needed > 0
+      expr: device:telescope:meridian_flip_needed>0
       for: 15m
       labels:
         severity: critical
@@ -101,14 +101,13 @@ groups:
         message: Meridian flip was missed and scope is still tracking.  Stop tracking or force a flip.
 
     - alert: TelescopeBelowHorizon
-      expr: device:telescope:is_tracking * on(host,device_number) 
-            device:telescope:altitude < 0
+      expr: device:telescope:is_tracking * on(instance,device_number) 
+            device:telescope:altitude<0
       for: 5m
       labels:
         severity: critical
       annotations:
         message: Telescope is below horizion and tracking.  This is unusual and should be stopped.
-
 
     - alert: TelescopeSideOfPierFailure
       expr: device:telescope:is_connected * on(host,device_number) 
@@ -175,3 +174,21 @@ groups:
         severity: critical
       annotations:
         message: Switch voltage output is high!
+
+    - alert: DeviceDisconnectedWarning
+      expr: device:status:disconnected
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        message: |
+          Alpaca metric exporter is unable to connect to {{ .Labels.driver }}.  Verify it is connected.
+
+    - alert: DeviceDisconnectedCritical
+      expr: device:status:disconnected
+      for: 15m
+      labels:
+        severity: critical
+      annotations:
+        message: |
+          Alpaca metric exporter is unable to connect to {{ .Labels.driver }}.  Verify it is connected.

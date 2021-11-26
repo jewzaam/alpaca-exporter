@@ -1,4 +1,11 @@
 groups:
+  - name: device:status
+    rules:
+    - record: device:status:connected
+      expr: alpaca_device_connected>0
+    - record: device:status:disconnected
+      expr: alpaca_device_connected==0
+
   - name: device:camera
     rules:
     - record: device:camera:is_connected
