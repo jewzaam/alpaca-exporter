@@ -4,3 +4,4 @@ pyjson
 cachetools
 httpimport
 requests
+prometheus-client
