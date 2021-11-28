@@ -131,6 +131,7 @@ if __name__ == '__main__':
                             print(f"FAILURE: unable to find {device_type}/{device_number}")
             done = True
         except Exception as e:
+            print("EXCEPTION")
             print(e)
             pass
     
@@ -268,6 +269,7 @@ if __name__ == '__main__':
                         device_metrcis()
 
         except Exception as e:
+            print("EXCEPTION")
             print(e)
             pass
 
@@ -283,6 +285,7 @@ if __name__ == '__main__':
                     utility.set(metric_name, None, labels)
             metrics_previous = metrics_current
         except Exception as e:
+            print("EXCEPTION")
             print(e)
             pass
 
