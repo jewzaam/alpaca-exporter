@@ -110,7 +110,7 @@ groups:
         message: Telescope is below horizion and tracking.  This is unusual and should be stopped.
 
     - alert: TelescopeSideOfPierFailure
-      expr: device:telescope:is_connected * on(host,device_number) 
+      expr: device:telescope:is_connected * on() 
             absent(device:telescope:side_of_pier)
       for: 1m
       labels:
@@ -176,7 +176,7 @@ groups:
         message: Switch voltage output is high!
 
     - alert: DeviceDisconnectedWarning
-      expr: device:status:disconnected
+      expr: device:status:disconnected>0
       for: 5m
       labels:
         severity: warning
@@ -185,7 +185,7 @@ groups:
           Alpaca metric exporter is unable to connect to {{ .Labels.driver }}.  Verify it is connected.
 
     - alert: DeviceDisconnectedCritical
-      expr: device:status:disconnected
+      expr: device:status:disconnected>0
       for: 15m
       labels:
         severity: critical
