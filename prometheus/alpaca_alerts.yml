@@ -175,7 +175,7 @@ groups:
       annotations:
         message: Switch voltage output is high!
 
-    - alert: DeviceDisconnectedWarning
+    - alert: DeviceDisconnected
       expr: device:status:disconnected>0
       for: 5m
       labels:
@@ -184,7 +184,7 @@ groups:
         message: |
           Alpaca metric exporter is unable to connect to {{ .Labels.driver }}.  Verify it is connected.
 
-    - alert: DeviceDisconnectedCritical
+    - alert: DeviceDisconnected
       expr: device:status:disconnected>0
       for: 15m
       labels:
@@ -192,3 +192,21 @@ groups:
       annotations:
         message: |
           Alpaca metric exporter is unable to connect to {{ .Labels.driver }}.  Verify it is connected.
+
+    - alert: DeviceAttributeProblems
+      expr: sum without(attribute) (rate(alpaca_error_total[1m]))>0
+      for: 1m
+      labels:
+        severity: warning
+      annotations:
+        message: |
+          Alpaca metric exporter is unable to fetch attributes for device {{ .Labels.device_type }}/{{ .Labels.device_number }} on host '{{ .Labels.host }}'.
+
+    - alert: DeviceAttributeProblems
+      expr: sum without(attribute) (rate(alpaca_error_total[1m]))>0
+      for: 10m
+      labels:
+        severity: critical
+      annotations:
+        message: |
+          Alpaca metric exporter is unable to fetch attributes for device {{ .Labels.device_type }}/{{ .Labels.device_number }} on host '{{ .Labels.host }}'.
