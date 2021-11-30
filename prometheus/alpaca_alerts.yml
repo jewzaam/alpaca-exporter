@@ -201,6 +201,7 @@ groups:
       annotations:
         message: |
           Alpaca metric exporter is unable to fetch attributes for device {{ .Labels.device_type }}/{{ .Labels.device_number }} on host '{{ .Labels.host }}'.
+          May need to reconnect to device, reboot PC, or completely power down rig.
 
     - alert: DeviceAttributeProblems
       expr: sum without(attribute) (rate(alpaca_error_total[1m]))>0
@@ -210,3 +211,4 @@ groups:
       annotations:
         message: |
           Alpaca metric exporter is unable to fetch attributes for device {{ .Labels.device_type }}/{{ .Labels.device_number }} on host '{{ .Labels.host }}'.
+          May need to reconnect to device, reboot PC, or completely power down rig.
