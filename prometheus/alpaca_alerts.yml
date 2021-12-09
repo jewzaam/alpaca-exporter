@@ -111,7 +111,7 @@ groups:
 
     - alert: TelescopeSideOfPierFailure
       expr: device:telescope:is_connected * on() 
-            absent(device:telescope:side_of_pier)
+            absent(device:telescope:side_of_pier) > 0
       for: 1m
       labels:
         severity: critical
