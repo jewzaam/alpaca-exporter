@@ -159,7 +159,7 @@ groups:
 
     - alert: VoltageLow
       expr: device:switch:is_connected AND on(host,device_number)
-            device:switch:Voltage < 12
+            device:switch:Voltage < 11.9
       for: 1m
       labels:
         severity: critical
