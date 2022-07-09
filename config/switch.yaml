@@ -12,11 +12,13 @@
 # prefix for all switch metric names
 metric_prefix: alpaca_switch_
 
-# labels common to all switch metrics (really not needed...)
+# labels common to all switch metrics
+# only include critical labels, if any is missing it will result in metrics _not_ being exported 
+# (i.e. do not include getswitchdescription, only getswitchname!)
 labels:
-- alpaca_name: getswitchdescription
-  label_name: switchdescription
-  cached: 1
+#- alpaca_name: getswitchdescription
+#  label_name: switchdescription
+#  cached: 1
 - alpaca_name: getswitchname
   label_name: switchname
   cached: 1
