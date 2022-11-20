@@ -2,6 +2,14 @@ groups:
   - name: device:alerts
     rules:
 
+    - alert: AlpacaDisconnected
+      expr: imaging:is_sequence_running UNLESS on(host) sum by(host) (alpaca_success_total)
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        message: Alpaca (ASCOM Remote Server) is not running on host "{{ .Labels.Host }}".
+
     - alert: CameraDisconnected
       expr: device:camera:was_connected > 0 AND on(host,device_number)
             device:camera:is_connected == 0 AND on(host)
@@ -124,15 +132,6 @@ groups:
     - alert: DeviceConnectionFailure
       expr: alpaca_device_connected == 0
       for: 5m
-      labels:
-        severity: warning
-      annotations:
-        message: |
-          Unable to connect to {{ .Labels.device_type }}/{{ .Labels.device_number }}.  Verify it is connected.
-
-    - alert: DeviceConnectionFailure
-      expr: alpaca_device_connected == 0
-      for: 15m
       labels:
         severity: critical
       annotations:
