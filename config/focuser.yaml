@@ -9,3 +9,4 @@ metric_prefix: alpaca_focuser_
 # cache_ttl is time for value to be cached in seconds.  default to 0 (no cache).
 metrics:
 - alpaca_name: position
+- alpaca_name: temperature
