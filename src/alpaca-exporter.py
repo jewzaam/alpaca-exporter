@@ -7,10 +7,7 @@ import requests
 import copy
 from cachetools import cached, TTLCache
 
-import httpimport
-
-with httpimport.github_repo('jewzaam', 'metrics-utility', 'utility', 'main'):
-    import utility
+import utility
 
 device_types = [
     "camera",
@@ -18,7 +15,7 @@ device_types = [
     "dome",
     "filterwheel",
     "focuser",
-    "observingcondition",
+    "observingconditions",
     "rotator",
     "safetymonitor",
     "switch",

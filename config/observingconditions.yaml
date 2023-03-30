@@ -1,11 +1,11 @@
 # for more attributes, see https://www.ascom-standards.org/api/#/
 
-# prefix for all observingcondition metric names
-metric_prefix: alpaca_observingcondition_
+# prefix for all observingconditions metric names
+metric_prefix: alpaca_observingconditions_
 
 # labels common to all observingcondition metrics
 labels:
-- alpaca_name: sensordescription
+- alpaca_name: name
   cached: 1
 
 # all exported metrics.
@@ -23,9 +23,9 @@ metrics:
 - alpaca_name: skybrightness
 - alpaca_name: skyquality
 - alpaca_name: skytemperature
-- alpaca_name: skyfwhm
+- alpaca_name: starfwhm
 - alpaca_name: temperature
 - alpaca_name: winddirection
-- alpaca_name: windguest
+- alpaca_name: windgust
 - alpaca_name: windspeed
-- alpaca_name: timesincelastupdate
+#- alpaca_name: timesincelastupdate
