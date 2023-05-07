@@ -72,10 +72,8 @@ def getValue(alpaca_base_url, device_type, device_number, attribute, querystr=""
         if "ErrorNumber" in data and data["ErrorNumber"] > 0:
             errNo = data["ErrorNumber"]
             if errNo == 1024:
-                # indicates something is not implemented.  return None, do nothing
-                # EXCEPT some switch values (at least in PBA) have no value.. ignore switch, they are snowflakes :(
-                if "switch" != device_type:
-                    print(f"WARNING: Request for attribute that is not implemented.  device_type={device_type}, device_number={device_number}, attribute={attribute}")
+                # indicates something is not implemented.  return None, do nothing.
+                # NOTE do not log any warning, it will just spam output as we don't disable / remove the attribute.
                 return None
             utility.inc("alpaca_error_total",labels)
             return None
