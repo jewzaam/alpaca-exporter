@@ -31,6 +31,10 @@ devices = {}
 # cache metadata for metrics.  it's an array of tuples, each tuple being [string,dictionary] representing metric name and labels (no value)
 metric_metadata_cache = {}
 
+# atributes not implemented for a device, could be device and driver specific.  so skip for that specific device. 
+# structure is {device_type: {device_number: [attributes]}}
+skip_device_attribute = {}
+
 DEBUG = False
 
 def debug(message):
@@ -54,6 +58,12 @@ def getValueCached(alpaca_base_url, device_type, device_number, attribute, query
 def getValue(alpaca_base_url, device_type, device_number, attribute, querystr=""):
     debug(f"getValue(_, {device_type}, {device_number}, {attribute}, {querystr})")
 
+    # check if we need to skip
+    if device_type in skip_device_attribute and str(device_number) in skip_device_attribute[device_type] and attribute in skip_device_attribute[device_type][str(device_number)]:
+        # yup, skip it
+        debug(f"skipping attribute={attribute} for {device_type}/{device_number}")
+        return None
+
     request_url = f"{alpaca_base_url}/{device_type}/{device_number}/{attribute}?{querystr}"
     debug(f"request_url = {request_url}")
     response = requests.get(request_url)
@@ -74,6 +84,12 @@ def getValue(alpaca_base_url, device_type, device_number, attribute, querystr=""
             if errNo == 1024:
                 # indicates something is not implemented.  return None, do nothing.
                 # NOTE do not log any warning, it will just spam output as we don't disable / remove the attribute.
+                if device_type not in skip_device_attribute:
+                    skip_device_attribute[device_type] = {}
+                if str(device_number) not in skip_device_attribute[device_type]:
+                    skip_device_attribute[device_type][str(device_number)] = []
+                # add this attribute to be skipped
+                skip_device_attribute[device_type][str(device_number)].append(attribute)
                 return None
             utility.inc("alpaca_error_total",labels)
             return None
