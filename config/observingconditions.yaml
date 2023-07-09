@@ -25,7 +25,7 @@ metrics:
 - alpaca_name: skytemperature
 - alpaca_name: starfwhm
 - alpaca_name: temperature
-- alpaca_name: winddirection
-- alpaca_name: windgust
-- alpaca_name: windspeed
+#- alpaca_name: winddirection
+#- alpaca_name: windgust
+#- alpaca_name: windspeed
 #- alpaca_name: timesincelastupdate
