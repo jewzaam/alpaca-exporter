@@ -13,7 +13,8 @@ groups:
     - record: device:camera:was_connected
       expr: max_over_time(alpaca_device_connected{device_type="camera"}[30m])
     - record: device:camera:temperature
-      expr: alpaca_camera_ccdtemperature
+      # fallback on nina detect, which is using TEMP from generated filenames, in cases where we have no alpaca data for a camera
+      expr: alpaca_camera_ccdtemperature OR nina_detect{type="TEMP"}
 
   - name: device:covercalibrator
     rules:
