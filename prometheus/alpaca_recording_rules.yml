@@ -82,9 +82,9 @@ groups:
     - record: device:switch:was_connected
       expr: max_over_time(alpaca_device_connected{device_type="switch"}[30m])
     - record: device:switch:DewA
-      expr: alpaca_switch_switchvalue{switchname="Current"}
+      expr: alpaca_switch_switchvalue{switchname="Dew A"}
     - record: device:switch:DewB
-      expr: alpaca_switch_switchvalue{switchname="DewB"}
+      expr: alpaca_switch_switchvalue{switchname="Dew B"}
     - record: device:switch:Temperature
       expr: alpaca_switch_switchvalue{switchname="Temperature"}
     - record: device:switch:Humidity
@@ -99,9 +99,9 @@ groups:
   - name: device:telescope
     rules:
     - record: device:telescope:is_connected
-      expr: max_over_time(alpaca_device_connected{device_type="telescope"}[1m])
+      expr: max_over_time(alpaca_telescope_sitelatitude[1m])
     - record: device:telescope:was_connected
-      expr: max_over_time(alpaca_device_connected{device_type="telescope"}[30m])
+      expr: max_over_time(alpaca_telescope_sitelatitude[30m])
     - record: device:telescope:side_of_pier
       expr: alpaca_telescope_sideofpier
     - record: device:telescope:is_tracking
