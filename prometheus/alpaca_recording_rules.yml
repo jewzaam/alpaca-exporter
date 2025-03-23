@@ -39,7 +39,7 @@ groups:
     - record: device:filterwheel:was_connected
       expr: max_over_time(alpaca_device_connected{device_type="filterwheel"}[30m])
     - record: device:filterwheel:position
-      expr: alpaca_filterwheel_position
+      expr: alpaca_filterwheel_position or nina_filter
 
   - name: device:focuser
     rules:
