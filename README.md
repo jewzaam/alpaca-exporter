@@ -21,7 +21,7 @@ Run the exporter with the port to expose metrics on, the base alpaca URL, and th
 The following runs the exporter for one telescope and two cameras.
 
 ```shell
-python src/alpaca-exporter.py --port 8001 --alpaca_base_url http://127.0.0.1:11111/api/v1/ --refresh_rate 10 --telescope 0 --camera 0 --camera 1
+python src/alpaca-exporter.py --port 8001 --alpaca_base_url http://127.0.0.1:11111/api/v1 --refresh_rate 10 --telescope 0 --camera 0 --camera 1
 ```
 
 ## Verify

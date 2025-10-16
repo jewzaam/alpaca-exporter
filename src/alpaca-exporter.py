@@ -104,7 +104,7 @@ def getValue(alpaca_base_url, device_type, device_number, attribute, querystr=""
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Export logs as prometheus metrics.")
     parser.add_argument("--port", type=int, help="port to expose metrics on, default: 9876")
-    parser.add_argument("--alpaca_base_url", type=str, help="base alpaca v1 api with trailing slash, default: http://127.0.0.1:11111/api/v1/")
+    parser.add_argument("--alpaca_base_url", type=str, help="base alpaca v1 api (trailing slash will be stripped), default: http://127.0.0.1:11111/api/v1")
     parser.add_argument("--refresh_rate", type=int, help="seconds between refreshing metrics, default: 5")
 
     # add args for each supported device type
@@ -114,9 +114,9 @@ if __name__ == '__main__':
     # treat args parsed as a dictionary
     args = vars(parser.parse_args())
 
-    alpaca_base_url = "http://127.0.0.1:11111/api/v1/"
+    alpaca_base_url = "http://127.0.0.1:11111/api/v1"
     if "alpaca_base_url" in args and args["alpaca_base_url"]:
-        alpaca_base_url = args["alpaca_base_url"]
+        alpaca_base_url = args["alpaca_base_url"].rstrip('/')
 
     refresh_rate = 5
     if "refresh_rate" in args and args["refresh_rate"]:
