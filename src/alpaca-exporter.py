@@ -188,6 +188,18 @@ if __name__ == '__main__':
     # build array of device numbers for each supported device
     # either via discovery or from user-provided arguments
     use_discovery = args.get("discover")
+    has_explicit_devices = any(args.get(dt) for dt in device_types)
+    
+    # Validate mutually exclusive modes
+    if use_discovery and has_explicit_devices:
+        print("ERROR: Cannot use --discover with explicit device specifications")
+        print("Usage: Either use '--discover' OR specify devices (e.g., '--telescope 0 --camera 0')")
+        exit(1)
+    
+    if not use_discovery and not has_explicit_devices:
+        print("ERROR: Must specify either --discover or at least one device")
+        print("Usage: '--discover' OR explicit devices (e.g., '--telescope 0 --camera 0')")
+        exit(1)
     
     if use_discovery:
         print("Auto-discovering devices via Alpaca Management API...")

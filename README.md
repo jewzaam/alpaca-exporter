@@ -2,6 +2,15 @@
 
 Export metrics from ASCOM devices via Alpaca in a form that Prometheus can scrape.
 
+---
+
+*Your mount tracks, your focuser hunts, your camera cools to minus ten.*  
+*ASCOM whispers through the wire, JSON flowing back again.*  
+*May your `alpaca_device_connected` stay on,*  
+*While you stack lights until astronomical dawn.*
+
+---
+
 ## Setup
 
 1. install requirements
@@ -47,6 +56,8 @@ The following runs the exporter for one telescope and two cameras:
 ```shell
 python src/alpaca-exporter.py --port 8001 --alpaca_base_url http://127.0.0.1:11111/api/v1 --refresh_rate 10 --telescope 0 --camera 0 --camera 1
 ```
+
+**Note:** The `--discover` flag and explicit device specifications are mutually exclusive. You must use one or the other, not both.
 
 ## Verify
 
