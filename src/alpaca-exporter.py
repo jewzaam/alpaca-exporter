@@ -31,7 +31,7 @@ devices = {}
 # cache metadata for metrics.  it's an array of tuples, each tuple being [string,dictionary] representing metric name and labels (no value)
 metric_metadata_cache = {}
 
-# atributes not implemented for a device, could be device and driver specific.  so skip for that specific device. 
+# atributes not implemented for a device, could be device and driver specific.  so skip for that specific device.
 # structure is {device_type: {device_number: [attributes]}}
 skip_device_attribute = {}
 
@@ -59,40 +59,40 @@ def discoverDevices(alpaca_base_url, verbose=True):
     """
     Discover all configured devices via the Alpaca Management API.
     Returns a dictionary with device_type as key and list of device numbers as value.
-    
+
     Args:
         alpaca_base_url: Base URL for Alpaca API
         verbose: If True, print discovery messages for all devices found
     """
     debug("discoverDevices(_)")
     discovered = {}
-    
+
     # Extract base URL (without /api/v1) for management API
     # alpaca_base_url is like "http://127.0.0.1:11111/api/v1"
     # management API is at "http://127.0.0.1:11111/management/v1/configureddevices"
     base = alpaca_base_url.rsplit('/api/', 1)[0]
     management_url = f"{base}/management/v1/configureddevices"
-    
+
     try:
         debug(f"management_url = {management_url}")
         response = requests.get(management_url)
-        
+
         if response.status_code != 200:
             print(f"WARNING: Failed to discover devices via management API (status {response.status_code})")
             return discovered
-            
+
         data = json.loads(response.text)
-        
+
         if "Value" not in data:
             print("WARNING: Management API response missing 'Value' field")
             return discovered
-            
+
         for device in data["Value"]:
             device_type = device["DeviceType"].lower()
             device_number = device["DeviceNumber"]
             device_name = device.get("DeviceName", "Unknown")
             unique_id = device.get("UniqueID", "")
-            
+
             # Only add devices of supported types
             if device_type in device_types:
                 if device_type not in discovered:
@@ -104,10 +104,10 @@ def discoverDevices(alpaca_base_url, verbose=True):
             else:
                 if verbose:
                     print(f"SKIPPED: {device_type}/{device_number} - {device_name} (unsupported device type)")
-                
+
     except Exception as e:
         print(f"ERROR: Failed to discover devices: {e}")
-        
+
     return discovered
 
 def getValue(alpaca_base_url, device_type, device_number, attribute, querystr="", record_metrics=True):
@@ -189,18 +189,18 @@ if __name__ == '__main__':
     # either via discovery or from user-provided arguments
     use_discovery = args.get("discover")
     has_explicit_devices = any(args.get(dt) for dt in device_types)
-    
+
     # Validate mutually exclusive modes
     if use_discovery and has_explicit_devices:
         print("ERROR: Cannot use --discover with explicit device specifications")
         print("Usage: Either use '--discover' OR specify devices (e.g., '--telescope 0 --camera 0')")
         exit(1)
-    
+
     if not use_discovery and not has_explicit_devices:
         print("ERROR: Must specify either --discover or at least one device")
         print("Usage: '--discover' OR explicit devices (e.g., '--telescope 0 --camera 0')")
         exit(1)
-    
+
     if use_discovery:
         print("Auto-discovering devices via Alpaca Management API...")
         devices = discoverDevices(alpaca_base_url)
@@ -225,20 +225,20 @@ if __name__ == '__main__':
                 print("EXCEPTION")
                 print(e)
                 pass
-        
+
             time.sleep(int(refresh_rate))
 
     if len(devices) == 0:
         print(f"ERROR: no devices configured, must supply at least one of: {device_types} or use --discover")
         os._exit(-1)
-    
+
     # Track all devices we've ever seen (for marking as disconnected when they disappear)
     # Initialize with the devices we found at startup
     all_known_devices = {}
     if use_discovery:
         for device_type in devices.keys():
             all_known_devices[device_type] = devices[device_type].copy()
-    
+
     # Track device connection status to detect state changes
     # Key format: "device_type/device_number", Value: True (connected) or False (disconnected)
     device_status = {}
@@ -258,7 +258,7 @@ if __name__ == '__main__':
             # Re-run discovery if in discovery mode to detect new/removed devices
             if use_discovery:
                 discovered_devices = discoverDevices(alpaca_base_url, verbose=False)
-                
+
                 # Update all_known_devices with newly discovered devices
                 for device_type in discovered_devices.keys():
                     if device_type not in all_known_devices:
@@ -267,17 +267,17 @@ if __name__ == '__main__':
                         if device_number not in all_known_devices[device_type]:
                             all_known_devices[device_type].append(device_number)
                             print(f"NEW DEVICE: {device_type}/{device_number} added to monitoring")
-                
+
                 # Update devices to currently discovered ones
                 devices = discovered_devices
-            
+
             metrics_current = []
 
             # First, handle all known devices (including ones that might be disconnected)
             for device_type in all_known_devices.keys() if use_discovery else devices.keys():
                 # Get the list of device numbers to check
                 device_numbers_to_check = all_known_devices[device_type] if use_discovery else devices[device_type]
-                
+
                 for device_number in device_numbers_to_check:
                     c = configurations[device_type]
 
@@ -294,14 +294,14 @@ if __name__ == '__main__':
                     # Track device status for state change detection
                     device_key = f"{device_type}/{device_number}"
                     previous_status = device_status.get(device_key, None)
-                    
+
                     # Check if device is in currently discovered devices (for discovery mode)
                     # or verify it's reachable (for manual mode or as fallback)
                     is_currently_discovered = True
                     if use_discovery:
-                        is_currently_discovered = (device_type in devices and 
+                        is_currently_discovered = (device_type in devices and
                                                   device_number in devices[device_type])
-                    
+
                     # If not discovered, mark as disconnected (only if previously connected)
                     if not is_currently_discovered:
                         if previous_status is True:
@@ -311,7 +311,7 @@ if __name__ == '__main__':
                             metrics_current.append(["alpaca_device_connected", copy.deepcopy(labels)])
                         device_status[device_key] = False
                         continue
-                    
+
                     # Verify this is a valid device by getting its name
                     # Only record metrics if device has been connected before
                     should_record = (previous_status is True)
@@ -328,7 +328,7 @@ if __name__ == '__main__':
                         # Device is connected - create/update metrics
                         utility.set("alpaca_device_connected", 1, labels)
                         metrics_current.append(["alpaca_device_connected", copy.deepcopy(labels)])
-                        
+
                         # Print CONNECTED when device becomes available (transitioning from any non-connected state)
                         if previous_status is not True:
                             print(f"CONNECTED: {device_type}/{device_number}")
@@ -352,7 +352,7 @@ if __name__ == '__main__':
                                 label_name = alpaca_name
                                 if "label_name" in l:
                                     label_name = l["label_name"]
-                                
+
                                 if alpaca_name == "name":
                                     # already pulled this early on
                                     label_value = name

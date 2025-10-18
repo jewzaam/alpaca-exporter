@@ -19,11 +19,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 class MockAlpacaServer:
     """Mock Alpaca server for testing"""
-    
+
     def __init__(self):
         self.devices = {}  # {(device_type, device_number): {'online': bool, 'attributes': dict}}
         self.error_responses = {}  # {(device_type, device_number, attribute): error_number}
-    
+
     def add_device(self, device_type, device_number, online=True):
         """Add a device to mock server"""
         key = (device_type, device_number)
@@ -33,39 +33,39 @@ class MockAlpacaServer:
                 'name': f'Test{device_type.capitalize()}{device_number}'
             }
         }
-    
+
     def set_device_online(self, device_type, device_number, online):
         """Set device online/offline status"""
         key = (device_type, device_number)
         if key in self.devices:
             self.devices[key]['online'] = online
-    
+
     def set_attribute(self, device_type, device_number, attribute, value):
         """Set an attribute value for a device"""
         key = (device_type, device_number)
         if key in self.devices:
             self.devices[key]['attributes'][attribute] = value
-    
+
     def set_attribute_error(self, device_type, device_number, attribute, error_number):
         """Set an attribute to return an error"""
         key = (device_type, device_number, attribute)
         self.error_responses[key] = error_number
-    
+
     def clear_attribute_error(self, device_type, device_number, attribute):
         """Clear an attribute error"""
         key = (device_type, device_number, attribute)
         if key in self.error_responses:
             del self.error_responses[key]
-    
+
     def handle_request(self, device_type, device_number, attribute):
         """Handle a mock API request"""
         device_key = (device_type, device_number)
         error_key = (device_type, device_number, attribute)
-        
+
         # Check if device exists and is online
         if device_key not in self.devices or not self.devices[device_key]['online']:
             return None  # Simulate connection failure
-        
+
         # Check if attribute has error response
         if error_key in self.error_responses:
             return {
@@ -73,7 +73,7 @@ class MockAlpacaServer:
                 'ErrorNumber': self.error_responses[error_key],
                 'ErrorMessage': f'Error {self.error_responses[error_key]}'
             }
-        
+
         # Check if attribute exists
         if attribute in self.devices[device_key]['attributes']:
             return {
@@ -81,7 +81,7 @@ class MockAlpacaServer:
                 'ErrorNumber': 0,
                 'ErrorMessage': ''
             }
-        
+
         # Attribute not found
         return {
             'Value': None,
@@ -92,7 +92,7 @@ class MockAlpacaServer:
 
 class TestDeviceStaysConnected(unittest.TestCase):
     """Test: Device Stays Connected"""
-    
+
     def test_device_stays_connected(self):
         """
         Given: Device online for multiple cycles
@@ -108,7 +108,7 @@ class TestDeviceStaysConnected(unittest.TestCase):
 
 class TestConnectedDeviceDisconnects(unittest.TestCase):
     """Test: Connected Device Disconnects"""
-    
+
     def test_connected_device_disconnects(self):
         """
         Given: Device connected, then goes offline
@@ -125,7 +125,7 @@ class TestConnectedDeviceDisconnects(unittest.TestCase):
 
 class TestDisconnectedDeviceReconnects(unittest.TestCase):
     """Test: Disconnected Device Reconnects"""
-    
+
     def test_disconnected_device_reconnects(self):
         """
         Given: Device was connected, disconnected, then connects again
@@ -144,7 +144,7 @@ class TestDisconnectedDeviceReconnects(unittest.TestCase):
 
 class TestNotImplementedAttribute(unittest.TestCase):
     """Test: Not-Implemented Attribute (Error 1024)"""
-    
+
     def test_error_1024_skip_list(self):
         """
         Given: Telescope connected, query for declinationrate returns ErrorNumber 1024
@@ -160,7 +160,7 @@ class TestNotImplementedAttribute(unittest.TestCase):
 
 class TestAttributeErrorNon1024(unittest.TestCase):
     """Test: Attribute Error (Non-1024)"""
-    
+
     def test_non_1024_error_retry(self):
         """
         Given: Camera connected, query for ccdtemperature returns ErrorNumber 1234
@@ -177,7 +177,7 @@ class TestAttributeErrorNon1024(unittest.TestCase):
 
 class TestSkipListResetOnConnect(unittest.TestCase):
     """Test: Skip List Reset on Connect"""
-    
+
     def test_skip_list_reset_on_reconnect(self):
         """
         Given: Telescope connects with Driver A, then disconnects and reconnects with Driver B
@@ -204,7 +204,7 @@ class TestSkipListResetOnConnect(unittest.TestCase):
 
 class TestMultipleDevicesIndependent(unittest.TestCase):
     """Test: Multiple Devices with Independent State Transitions"""
-    
+
     def test_multiple_devices_independent_states(self):
         """
         Given: Three connected devices (rotator/0, telescope/0, camera/0)
@@ -220,7 +220,7 @@ class TestMultipleDevicesIndependent(unittest.TestCase):
 
 class TestMultipleDevicesSameType(unittest.TestCase):
     """Test: Multiple Devices of Same Type"""
-    
+
     def test_multiple_devices_same_type(self):
         """
         Given: Two cameras configured/discovered: camera/0 and camera/1
@@ -238,7 +238,7 @@ class TestMultipleDevicesSameType(unittest.TestCase):
 
 class TestAlpacaServerUnavailableStartup(unittest.TestCase):
     """Test: Alpaca Server Unavailable at Startup"""
-    
+
     def test_server_unavailable_at_startup(self):
         """
         Given: Exporter starts, but Alpaca server at configured URL is not reachable
@@ -254,7 +254,7 @@ class TestAlpacaServerUnavailableStartup(unittest.TestCase):
 
 class TestAlpacaServerBecomesUnavailable(unittest.TestCase):
     """Test: Alpaca Server Becomes Unavailable During Runtime"""
-    
+
     def test_server_becomes_unavailable_runtime(self):
         """
         Given: Exporter running with multiple connected devices, Alpaca server becomes unreachable

@@ -21,19 +21,19 @@ if __name__ == '__main__':
     # Discover and run tests
     loader = unittest.TestLoader()
     start_dir = os.path.dirname(os.path.abspath(__file__))
-    
+
     # Check if specific test module specified
     if len(sys.argv) > 1 and not sys.argv[1].startswith('-'):
         pattern = f'{sys.argv[1]}*.py'
         sys.argv.pop(1)  # Remove module name from argv so unittest doesn't see it
     else:
         pattern = 'test_*.py'
-    
+
     suite = loader.discover(start_dir, pattern=pattern)
-    
+
     runner = unittest.TextTestRunner(verbosity=2 if '-v' in sys.argv else 1)
     result = runner.run(suite)
-    
+
     # Exit with appropriate code
     sys.exit(0 if result.wasSuccessful() else 1)
 
