@@ -19,7 +19,7 @@ Validate behavior when devices are explicitly specified via command-line argumen
 
 **Given:** `--rotator 0` specified, device never responds to queries  
 **Expected:**
-- Log: `FAILURE: unable to find rotator/0` (on startup)
+- Log: `DISCONNECTED: rotator/0` (on startup)
 - Metrics created immediately: `alpaca_device_connected=0`, `alpaca_error_total`, `alpaca_error_created`
 - No `alpaca_device_name` metric (device never responded)
 - No `alpaca_success_total` (never connected)
@@ -32,8 +32,7 @@ Validate behavior when devices are explicitly specified via command-line argumen
 
 **Given:** `--rotator 0` specified, device responds to queries  
 **Expected:**
-- Log: `SUCCESS: found rotator/0` (on startup)
-- Log: `CONNECTED: rotator/0` (first successful query)
+- Log: `CONNECTED: rotator/0` (on startup)
 - Metrics created: `alpaca_device_connected=1`, `alpaca_device_name`, `alpaca_success_total`, `alpaca_success_created`
 - Success counter increments for each successful query
 
@@ -48,17 +47,27 @@ Validate behavior when devices are explicitly specified via command-line argumen
 
 **Expected:**
 - Startup logs:
-  - `SUCCESS: found rotator/0`
-  - `FAILURE: unable to find telescope/0`
-  - `SUCCESS: found camera/0`
+  - `CONNECTED: rotator/0`
+  - `DISCONNECTED: telescope/0`
+  - `CONNECTED: camera/0`
 - Initial metrics:
   - `alpaca_device_connected{rotator/0}=1`
   - `alpaca_device_connected{telescope/0}=0`
   - `alpaca_device_connected{camera/0}=1`
 - After camera disconnects:
-  - Log: `DISCONNECTED: camera/0 not responding`
+  - Log: `DISCONNECTED: camera/0`
   - `alpaca_device_connected{camera/0}=0`
   - `alpaca_error_total{camera/0}` increments
+
+---
+
+### Device Specified Without Configuration File
+
+**Given:** `--safetymonitor 0` specified, but no `config/safetymonitor.yaml` exists
+**Expected:**
+- Exporter terminates with error
+- Error message: Missing configuration file for device type
+- Exit code: non-zero
 
 ---
 

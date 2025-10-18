@@ -36,6 +36,26 @@ Validate auto-discovery behavior when using `--discover` flag. In this mode, the
 
 ---
 
+### New Device Discovered During Runtime
+
+**Given:** Exporter running in discover mode, new device appears in configured devices list
+**Expected:**
+- Log: `DISCOVERED: camera/1 - CameraName`
+- If device responds: Log `CONNECTED: camera/1`, create metrics
+- If device offline: No additional logs, no metrics created
+
+---
+
+### Discovered Device Type Without Configuration File
+
+**Given:** `--discover` mode, Alpaca server returns device type without corresponding config file (e.g., `safetymonitor/0` but no `config/safetymonitor.yaml`)
+**Expected:**
+- Exporter terminates with error
+- Error message: Missing configuration file for device type
+- Exit code: non-zero
+
+---
+
 **Note:** For tests on device disconnects, reconnects, skip lists, and multiple devices, see `unit-test-plan-general.md`.
 
 ---
