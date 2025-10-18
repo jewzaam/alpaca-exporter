@@ -1,11 +1,12 @@
 import argparse
-import yaml
+import copy
 import json
 import os
 import time
+
 import requests
-import copy
-from cachetools import cached, TTLCache
+import yaml
+from cachetools import TTLCache, cached
 
 import utility
 
@@ -37,23 +38,27 @@ skip_device_attribute = {}
 
 DEBUG = False
 
+
 def debug(message):
     # simply so I can easily control debug messages
     if DEBUG:
         print(message)
 
+
 def loadConfigurations(path):
     for _, _, filenames in os.walk(path):
         for filename in filenames:
-            with open(os.path.join(path, filename), 'r') as file:
+            with open(os.path.join(path, filename)) as file:
                 c = yaml.load(file, Loader=yaml.FullLoader)
                 t = filename.split(".")[0]
                 configurations[t] = c
+
 
 @cached(cache=TTLCache(maxsize=1024, ttl=60))
 def getValueCached(alpaca_base_url, device_type, device_number, attribute, querystr="", record_metrics=True):
     debug(f"getValueCached(_, {device_type}, {device_number}, {attribute}, {querystr})")
     return getValue(alpaca_base_url, device_type, device_number, attribute, querystr, record_metrics)
+
 
 def discoverDevices(alpaca_base_url, verbose=True):
     """
@@ -70,7 +75,7 @@ def discoverDevices(alpaca_base_url, verbose=True):
     # Extract base URL (without /api/v1) for management API
     # alpaca_base_url is like "http://127.0.0.1:11111/api/v1"
     # management API is at "http://127.0.0.1:11111/management/v1/configureddevices"
-    base = alpaca_base_url.rsplit('/api/', 1)[0]
+    base = alpaca_base_url.rsplit("/api/", 1)[0]
     management_url = f"{base}/management/v1/configureddevices"
 
     try:
@@ -101,14 +106,14 @@ def discoverDevices(alpaca_base_url, verbose=True):
                     discovered[device_type].append(device_number)
                     if verbose:
                         print(f"DISCOVERED: {device_type}/{device_number} - {device_name}")
-            else:
-                if verbose:
-                    print(f"SKIPPED: {device_type}/{device_number} - {device_name} (unsupported device type)")
+            elif verbose:
+                print(f"SKIPPED: {device_type}/{device_number} - {device_name} (unsupported device type)")
 
     except Exception as e:
         print(f"ERROR: Failed to discover devices: {e}")
 
     return discovered
+
 
 def getValue(alpaca_base_url, device_type, device_number, attribute, querystr="", record_metrics=True):
     debug(f"getValue(_, {device_type}, {device_number}, {attribute}, {querystr})")
@@ -129,60 +134,60 @@ def getValue(alpaca_base_url, device_type, device_number, attribute, querystr=""
         "attribute": attribute,
     }
 
-    if response.status_code != 200 or response.text is None or response.text == '':
+    if response.status_code != 200 or response.text is None or response.text == "":
         if record_metrics:
-            utility.inc("alpaca_error_total",labels)
+            utility.inc("alpaca_error_total", labels)
         return None
-    else:
-        data = json.loads(response.text)
-        if "ErrorNumber" in data and data["ErrorNumber"] > 0:
-            errNo = data["ErrorNumber"]
-            if errNo == 1024:
-                # indicates something is not implemented.  return None, do nothing.
-                # NOTE do not log any warning, it will just spam output as we don't disable / remove the attribute.
-                if device_type not in skip_device_attribute:
-                    skip_device_attribute[device_type] = {}
-                if str(device_number) not in skip_device_attribute[device_type]:
-                    skip_device_attribute[device_type][str(device_number)] = []
-                # add this attribute to be skipped
-                skip_device_attribute[device_type][str(device_number)].append(attribute)
-                return None
-            if record_metrics:
-                utility.inc("alpaca_error_total",labels)
+    data = json.loads(response.text)
+    if "ErrorNumber" in data and data["ErrorNumber"] > 0:
+        errNo = data["ErrorNumber"]
+        if errNo == 1024:
+            # indicates something is not implemented.  return None, do nothing.
+            # NOTE do not log any warning, it will just spam output as we don't disable / remove the attribute.
+            if device_type not in skip_device_attribute:
+                skip_device_attribute[device_type] = {}
+            if str(device_number) not in skip_device_attribute[device_type]:
+                skip_device_attribute[device_type][str(device_number)] = []
+            # add this attribute to be skipped
+            skip_device_attribute[device_type][str(device_number)].append(attribute)
             return None
-        value = data["Value"]
-        # convert boolean to int
-        if isinstance(value, (bool)):
-            value = int(value == True)
         if record_metrics:
-            utility.inc("alpaca_success_total",labels)
-        debug(f"==> {value}")
-        return value
+            utility.inc("alpaca_error_total", labels)
+        return None
+    value = data["Value"]
+    # convert boolean to int
+    if isinstance(value, (bool)):
+        value = int(value == True)
+    if record_metrics:
+        utility.inc("alpaca_success_total", labels)
+    debug(f"==> {value}")
+    return value
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Export logs as prometheus metrics.")
     parser.add_argument("--port", type=int, help="port to expose metrics on, default: 9876")
     parser.add_argument("--alpaca_base_url", type=str, help="base alpaca v1 api (trailing slash will be stripped), default: http://127.0.0.1:11111/api/v1")
     parser.add_argument("--refresh_rate", type=int, help="seconds between refreshing metrics, default: 5")
-    parser.add_argument("--discover", action='store_true', help="automatically discover all configured devices via Alpaca Management API")
+    parser.add_argument("--discover", action="store_true", help="automatically discover all configured devices via Alpaca Management API")
 
     # add args for each supported device type
     for device_type in device_types:
-        parser.add_argument(f"--{device_type}", type=int, action='append', help=f"{device_type} device number")
+        parser.add_argument(f"--{device_type}", type=int, action="append", help=f"{device_type} device number")
 
     # treat args parsed as a dictionary
     args = vars(parser.parse_args())
 
     alpaca_base_url = "http://127.0.0.1:11111/api/v1"
-    if "alpaca_base_url" in args and args["alpaca_base_url"]:
-        alpaca_base_url = args["alpaca_base_url"].rstrip('/')
+    if args.get("alpaca_base_url"):
+        alpaca_base_url = args["alpaca_base_url"].rstrip("/")
 
     refresh_rate = 5
-    if "refresh_rate" in args and args["refresh_rate"]:
+    if args.get("refresh_rate"):
         refresh_rate = args["refresh_rate"]
 
     port = 9876
-    if "port" in args and args["port"]:
+    if args.get("port"):
         port = args["port"]
 
     # build array of device numbers for each supported device
@@ -224,7 +229,6 @@ if __name__ == '__main__':
             except Exception as e:
                 print("EXCEPTION")
                 print(e)
-                pass
 
             time.sleep(int(refresh_rate))
 
@@ -293,14 +297,13 @@ if __name__ == '__main__':
 
                     # Track device status for state change detection
                     device_key = f"{device_type}/{device_number}"
-                    previous_status = device_status.get(device_key, None)
+                    previous_status = device_status.get(device_key)
 
                     # Check if device is in currently discovered devices (for discovery mode)
                     # or verify it's reachable (for manual mode or as fallback)
                     is_currently_discovered = True
                     if use_discovery:
-                        is_currently_discovered = (device_type in devices and
-                                                  device_number in devices[device_type])
+                        is_currently_discovered = device_type in devices and device_number in devices[device_type]
 
                     # If not discovered, mark as disconnected (only if previously connected)
                     if not is_currently_discovered:
@@ -314,7 +317,7 @@ if __name__ == '__main__':
 
                     # Verify this is a valid device by getting its name
                     # Only record metrics if device has been connected before
-                    should_record = (previous_status is True)
+                    should_record = previous_status is True
                     name = getValue(alpaca_base_url, device_type, device_number, "name", "", should_record)
                     if not name:
                         if previous_status is True:
@@ -337,7 +340,7 @@ if __name__ == '__main__':
                         device_status[device_key] = True
                         labels.update({"name": name})
                         utility.set("alpaca_device_name", 1, labels)
-                        metrics_current.append(["alpaca_device_name",copy.deepcopy(labels)])
+                        metrics_current.append(["alpaca_device_name", copy.deepcopy(labels)])
 
                     metric_prefix = ""
                     if "metric_prefix" in c:
@@ -402,7 +405,7 @@ if __name__ == '__main__':
                             # if it's none but there is no prior value it will fail, ignore this
                             try:
                                 utility.set(metric_name, metric_value, labels)
-                                metrics_current.append([metric_name,copy.deepcopy(labels)])
+                                metrics_current.append([metric_name, copy.deepcopy(labels)])
                             except:
                                 pass
 
@@ -410,14 +413,14 @@ if __name__ == '__main__':
                     global_labels()
 
                     # SWITCH is a special device with an "id" query param.
-                    if "switch" == device_type:
+                    if device_type == "switch":
                         # ids will be number of switch devices.
                         # id is 0 based, but range excludes the upper boundary.
                         # so using ids as is and upper bounds excluded is perfect.
                         ids = getValueCached(alpaca_base_url, device_type, device_number, "maxswitch")
-                        for id in range(0, ids):
+                        for id in range(ids):
                             # also set 'id' on labels so it creates a unique key for metrics
-                            labels['id'] = id
+                            labels["id"] = id
                             device_labels(f"id={id}")
                             device_metrcis(f"id={id}")
                     else:
@@ -428,15 +431,14 @@ if __name__ == '__main__':
         except Exception as e:
             print("EXCEPTION")
             print(e)
-            pass
 
         # handle cleanup of metrics.  this is the case when something stops reporting and we do not want stale metric.
         try:
             for m in metrics_previous:
                 # if the cache has a value we didn't just collect we must remove the metric
                 if m not in metrics_current:
-                    metric_name=m[0]
-                    labels=m[1]
+                    metric_name = m[0]
+                    labels = m[1]
                     debug(f"DEBUG: removing metric.  metric_name={metric_name}, labels={labels}")
                     # wipe the metric
                     utility.set(metric_name, None, labels)
@@ -444,6 +446,5 @@ if __name__ == '__main__':
         except Exception as e:
             print("EXCEPTION")
             print(e)
-            pass
 
         time.sleep(int(refresh_rate))
