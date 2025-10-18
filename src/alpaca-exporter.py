@@ -438,7 +438,7 @@ if __name__ == "__main__":
                 # if the cache has a value we didn't just collect we must remove the metric
                 if m not in metrics_current:
                     metric_name = m[0]
-                    labels = m[1]
+                    labels = m[1]  # type: ignore[assignment]
                     debug(f"DEBUG: removing metric.  metric_name={metric_name}, labels={labels}")
                     # wipe the metric
                     utility.set(metric_name, None, labels)

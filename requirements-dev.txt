@@ -9,5 +9,8 @@ pytest-cov>=4.0.0
 mypy>=1.0.0
 ruff>=0.1.0
 coverage>=7.0.0
+types-requests>=2.0.0
+types-PyYAML>=6.0.0
+types-cachetools>=5.0.0
 
 
