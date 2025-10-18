@@ -126,13 +126,21 @@ def getValue(alpaca_base_url, device_type, device_number, attribute, querystr=""
 
     request_url = f"{alpaca_base_url}/{device_type}/{device_number}/{attribute}?{querystr}"
     debug(f"request_url = {request_url}")
-    response = requests.get(request_url)
 
     labels = {
         "device_type": device_type,
         "device_number": device_number,
         "attribute": attribute,
     }
+
+    try:
+        response = requests.get(request_url)
+    except Exception as e:
+        # Network error, connection refused, timeout, etc.
+        debug(f"Connection error: {e}")
+        if record_metrics:
+            utility.inc("alpaca_error_total", labels)
+        return None
 
     if response.status_code != 200 or response.text is None or response.text == "":
         if record_metrics:

@@ -1,6 +1,9 @@
+# Python artifacts
 __pycache__/
-venv/
 .venv/
+venv/
+
+# Obsidian artifacts
 .obsidian/
 
 # Build artifacts
@@ -16,3 +19,9 @@ htmlcov/
 .mypy_cache/
 .ruff_cache/
 .tox/
+
+# Coverage artifacts
+.coverage-percentage
+.coverage
+coverage.xml
+htmlcov/
