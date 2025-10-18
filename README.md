@@ -16,9 +16,33 @@ pip3 install -r requirements.txt
 
 ## Usage
 
-Run the exporter with the port to expose metrics on, the base alpaca URL, and the device IDs of all devices to monitor.  If you have more than one of a type of device simply use the device twice.
+Run the exporter with the port to expose metrics on, the base alpaca URL, and either manually specify device IDs or use auto-discovery.
 
-The following runs the exporter for one telescope and two cameras.
+### Auto-Discovery (Recommended)
+
+The exporter can automatically discover all configured devices via the Alpaca Management API. Discovery runs continuously on every collection cycle, enabling dynamic device detection:
+
+- **New devices**: Automatically added to monitoring when discovered (prints `NEW DEVICE` message)
+- **Connection status**: Devices report their connection state
+  - `DISCOVERED`: Device found via management API (startup only)
+  - `CONNECTED`: Device successfully responds (first connection or after being offline)
+  - `DISCONNECTED`: Device becomes unavailable (not responding or removed from configuration)
+- **Metric lifecycle**: 
+  - Metrics are **only created** when a device first successfully connects
+  - Discovered but never-connected devices will **not** have any metrics (preventing false alerts)
+  - When a previously-connected device disconnects, `alpaca_device_connected` is set to 0 to trigger alerts
+
+```shell
+python src/alpaca-exporter.py --port 8001 --alpaca_base_url http://127.0.0.1:11111/api/v1 --refresh_rate 10 --discover
+```
+
+This is ideal for environments where devices may be added or removed dynamically.
+
+### Manual Device Configuration
+
+Alternatively, you can manually specify which devices to monitor. If you have more than one of a type of device simply use the device type argument multiple times.
+
+The following runs the exporter for one telescope and two cameras:
 
 ```shell
 python src/alpaca-exporter.py --port 8001 --alpaca_base_url http://127.0.0.1:11111/api/v1 --refresh_rate 10 --telescope 0 --camera 0 --camera 1
