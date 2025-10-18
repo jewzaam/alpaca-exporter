@@ -9,6 +9,10 @@ venv: ## Create Python virtual environment
 		$(PYTHON) -m venv $(VENV_DIR); \
 		printf "$(GREEN)✅ Virtual environment created$(RESET)\n"; \
 	fi
+	@if [ ! -f "$(VENV_DIR)/bin/pip" ]; then \
+		$(VENV_PYTHON) -m ensurepip --upgrade; \
+		printf "$(GREEN)✅ pip installed$(RESET)\n"; \
+	fi
 
 uv: venv ## Install uv package manager
 	@if [ ! -f "$(VENV_DIR)/bin/uv" ]; then \

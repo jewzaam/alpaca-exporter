@@ -2,3 +2,17 @@ __pycache__/
 venv/
 .venv/
 .obsidian/
+
+# Build artifacts
+*.egg-info/
+dist/
+build/
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+.coverage-percentage
+.mypy_cache/
+.ruff_cache/
+.tox/

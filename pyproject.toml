@@ -41,9 +41,6 @@ dev = [
     "coverage>=7.0.0",
 ]
 
-[project.scripts]
-alpaca-exporter = "alpaca-exporter:main"
-
 [tool.setuptools.packages.find]
 where = ["src"]
 
@@ -69,7 +66,7 @@ warn_unreachable = true
 strict_equality = true
 
 [tool.ruff]
-line-length = 88
+line-length = 120
 target-version = "py310"
 
 [tool.ruff.lint]
