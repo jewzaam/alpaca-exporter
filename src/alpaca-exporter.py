@@ -153,7 +153,7 @@ def getValue(alpaca_base_url, device_type, device_number, attribute, querystr=""
     value = data["Value"]
     # convert boolean to int
     if isinstance(value, (bool)):
-        value = int(value == True)
+        value = int(value)
     if record_metrics:
         utility.inc("alpaca_success_total", labels)
     debug(f"==> {value}")
