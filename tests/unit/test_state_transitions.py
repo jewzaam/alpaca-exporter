@@ -19,13 +19,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 class TestDeviceStateTransitions(unittest.TestCase):
     """Test device state transitions (connected → disconnected → reconnected)"""
 
-    def setUp(self):
-        """Clear prometheus registry and state before each test"""
-        import prometheus_client
-
-        prometheus_client.REGISTRY._collector_to_names.clear()
-        prometheus_client.REGISTRY._names_to_collectors.clear()
-
     @patch("requests.get")
     @patch("builtins.print")
     def test_device_stays_connected_no_transition_logs(self, mock_print, mock_get):
@@ -39,11 +32,6 @@ class TestDeviceStateTransitions(unittest.TestCase):
         - Error counter does not increment
         """
         from importlib import import_module
-
-        import utility
-
-        utility.gauges = {}
-        utility.counters = {}
 
         alpaca_exporter = import_module("alpaca-exporter")
         alpaca_exporter.skip_device_attribute = {}
@@ -102,11 +90,6 @@ class TestDeviceStateTransitions(unittest.TestCase):
         - Error counter incremented for failed name query
         """
         from importlib import import_module
-
-        import utility
-
-        utility.gauges = {}
-        utility.counters = {}
 
         alpaca_exporter = import_module("alpaca-exporter")
         alpaca_exporter.skip_device_attribute = {}
@@ -167,11 +150,6 @@ class TestDeviceStateTransitions(unittest.TestCase):
         - Skip list should be reset
         """
         from importlib import import_module
-
-        import utility
-
-        utility.gauges = {}
-        utility.counters = {}
 
         alpaca_exporter = import_module("alpaca-exporter")
         alpaca_exporter.skip_device_attribute = {
@@ -240,13 +218,6 @@ class TestDeviceStateTransitions(unittest.TestCase):
 class TestSkipListReset(unittest.TestCase):
     """Test that skip list is reset when device reconnects"""
 
-    def setUp(self):
-        """Clear prometheus registry and state before each test"""
-        import prometheus_client
-
-        prometheus_client.REGISTRY._collector_to_names.clear()
-        prometheus_client.REGISTRY._names_to_collectors.clear()
-
     @patch("requests.get")
     def test_skip_list_reset_on_reconnect(self, mock_get):
         """
@@ -261,11 +232,6 @@ class TestSkipListReset(unittest.TestCase):
         6. Previously skipped attribute should be queried again
         """
         from importlib import import_module
-
-        import utility
-
-        utility.gauges = {}
-        utility.counters = {}
 
         alpaca_exporter = import_module("alpaca-exporter")
         alpaca_exporter.skip_device_attribute = {}
@@ -324,13 +290,6 @@ class TestSkipListReset(unittest.TestCase):
 class TestMultipleDevicesIndependentStates(unittest.TestCase):
     """Test that multiple devices maintain independent states"""
 
-    def setUp(self):
-        """Clear prometheus registry and state before each test"""
-        import prometheus_client
-
-        prometheus_client.REGISTRY._collector_to_names.clear()
-        prometheus_client.REGISTRY._names_to_collectors.clear()
-
     @patch("requests.get")
     def test_multiple_devices_independent_skip_lists(self, mock_get):
         """
@@ -340,11 +299,6 @@ class TestMultipleDevicesIndependentStates(unittest.TestCase):
         still query attribute X (different device may have different capabilities).
         """
         from importlib import import_module
-
-        import utility
-
-        utility.gauges = {}
-        utility.counters = {}
 
         alpaca_exporter = import_module("alpaca-exporter")
         alpaca_exporter.skip_device_attribute = {}

@@ -19,13 +19,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 class TestDiscoveryMode(unittest.TestCase):
     """Test auto-discovery mode specific behavior"""
 
-    def setUp(self):
-        """Clear prometheus registry before each test"""
-        import prometheus_client
-
-        prometheus_client.REGISTRY._collector_to_names.clear()
-        prometheus_client.REGISTRY._names_to_collectors.clear()
-
     @patch("requests.get")
     def test_discovery_filters_by_device_type(self, mock_get):
         """
@@ -35,11 +28,6 @@ class TestDiscoveryMode(unittest.TestCase):
         These should be filtered out and logged as SKIPPED.
         """
         from importlib import import_module
-
-        import utility
-
-        utility.gauges = {}
-        utility.counters = {}
 
         alpaca_exporter = import_module("alpaca-exporter")
 
@@ -81,11 +69,6 @@ class TestDiscoveryMode(unittest.TestCase):
         """
         from importlib import import_module
 
-        import utility
-
-        utility.gauges = {}
-        utility.counters = {}
-
         alpaca_exporter = import_module("alpaca-exporter")
 
         # Mock Management API with multiple cameras
@@ -124,11 +107,6 @@ class TestDiscoveryMode(unittest.TestCase):
         """
         from importlib import import_module
 
-        import utility
-
-        utility.gauges = {}
-        utility.counters = {}
-
         alpaca_exporter = import_module("alpaca-exporter")
 
         # Mock Management API returning HTTP error
@@ -156,11 +134,6 @@ class TestDiscoveryMode(unittest.TestCase):
         """
         from importlib import import_module
 
-        import utility
-
-        utility.gauges = {}
-        utility.counters = {}
-
         alpaca_exporter = import_module("alpaca-exporter")
 
         # Mock Management API with malformed response (missing Value field)
@@ -181,13 +154,6 @@ class TestDiscoveryMode(unittest.TestCase):
 class TestDiscoveryVerboseFlag(unittest.TestCase):
     """Test verbose flag behavior in discovery"""
 
-    def setUp(self):
-        """Clear prometheus registry before each test"""
-        import prometheus_client
-
-        prometheus_client.REGISTRY._collector_to_names.clear()
-        prometheus_client.REGISTRY._names_to_collectors.clear()
-
     @patch("requests.get")
     @patch("builtins.print")
     def test_verbose_true_prints_discovered_devices(self, mock_print, mock_get):
@@ -197,11 +163,6 @@ class TestDiscoveryVerboseFlag(unittest.TestCase):
         When verbose=True, discovery should print info about each device found.
         """
         from importlib import import_module
-
-        import utility
-
-        utility.gauges = {}
-        utility.counters = {}
 
         alpaca_exporter = import_module("alpaca-exporter")
 
@@ -240,11 +201,6 @@ class TestDiscoveryVerboseFlag(unittest.TestCase):
         discovery messages (they would spam logs every cycle).
         """
         from importlib import import_module
-
-        import utility
-
-        utility.gauges = {}
-        utility.counters = {}
 
         alpaca_exporter = import_module("alpaca-exporter")
 

@@ -8,8 +8,9 @@ if __name__ == "__main__" block, now refactored into testable functions.
 
 import copy
 
+import metrics_utility
+
 import constants
-import utility
 
 
 def parse_config_defaults(args):
@@ -151,7 +152,7 @@ def collect_device_metrics(labels, configurations, device_type, metric_prefix, a
         # if metric_value is None we'll try to clear it
         # if it's none but there is no prior value it will fail, ignore this
         try:
-            utility.set(metric_name, metric_value, labels)
+            metrics_utility.set(metric_name, metric_value, labels)
             metrics_collected.append([metric_name, copy.deepcopy(labels)])
         except:
             pass
@@ -215,7 +216,7 @@ def process_device(
     if not is_currently_discovered:
         if was_connected is True:
             print(f"DISCONNECTED: {device_type}/{device_number} no longer discovered")
-            utility.set("alpaca_device_connected", 0, labels)
+            metrics_utility.set("alpaca_device_connected", 0, labels)
             metrics_current.append(["alpaca_device_connected", copy.deepcopy(labels)])
         device_status[device_key] = False
         return metrics_current
@@ -228,14 +229,14 @@ def process_device(
     if not name:
         if was_connected is True:
             print(f"DISCONNECTED: {device_type}/{device_number} not responding")
-            utility.set("alpaca_device_connected", 0, labels)
+            metrics_utility.set("alpaca_device_connected", 0, labels)
             metrics_current.append(["alpaca_device_connected", copy.deepcopy(labels)])
         device_status[device_key] = False
         return metrics_current
 
     # Device is connected - create/update metrics
     # NOTE: 'name' label is not added until after the connected metric is created/updated
-    utility.set("alpaca_device_connected", 1, labels)
+    metrics_utility.set("alpaca_device_connected", 1, labels)
     metrics_current.append(["alpaca_device_connected", copy.deepcopy(labels)])
 
     # Print CONNECTED when device becomes available (transitioning from any non-connected state)
@@ -246,7 +247,7 @@ def process_device(
 
     device_status[device_key] = True
     labels.update({"name": name})
-    utility.set("alpaca_device_name", 1, labels)
+    metrics_utility.set("alpaca_device_name", 1, labels)
     metrics_current.append(["alpaca_device_name", copy.deepcopy(labels)])
 
     metric_prefix = ""
@@ -312,4 +313,4 @@ def cleanup_stale_metrics(metrics_previous, metrics_current):
             metric_name = m[0]
             labels = m[1]  # type: ignore[assignment]
             # wipe the metric
-            utility.set(metric_name, None, labels)
+            metrics_utility.set(metric_name, None, labels)

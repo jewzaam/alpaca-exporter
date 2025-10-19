@@ -3,13 +3,13 @@ import json
 import os
 import time
 
+import metrics_utility
 import requests
 import yaml
 from cachetools import TTLCache, cached
 
 import constants
 import exporter_core
-import utility
 
 # general configuration, key is 'device type' (i.e. telescope)
 configurations = {}
@@ -127,12 +127,12 @@ def getValue(alpaca_base_url, device_type, device_number, attribute, querystr=""
         # Network error, connection refused, timeout, etc.
         debug(f"Connection error: {e}")
         if record_metrics:
-            utility.inc("alpaca_error_total", labels)
+            metrics_utility.inc("alpaca_error_total", labels)
         return None
 
     if response.status_code != 200 or response.text is None or response.text == "":
         if record_metrics:
-            utility.inc("alpaca_error_total", labels)
+            metrics_utility.inc("alpaca_error_total", labels)
         return None
     data = json.loads(response.text)
     if "ErrorNumber" in data and data["ErrorNumber"] > 0:
@@ -148,14 +148,14 @@ def getValue(alpaca_base_url, device_type, device_number, attribute, querystr=""
             skip_device_attribute[device_type][str(device_number)].append(attribute)
             return None
         if record_metrics:
-            utility.inc("alpaca_error_total", labels)
+            metrics_utility.inc("alpaca_error_total", labels)
         return None
     value = data["Value"]
     # convert boolean to int
     if isinstance(value, (bool)):
         value = int(value)
     if record_metrics:
-        utility.inc("alpaca_success_total", labels)
+        metrics_utility.inc("alpaca_success_total", labels)
     debug(f"==> {value}")
     return value
 
@@ -189,7 +189,7 @@ def main():
     loadConfigurations("config/")
 
     # Start Prometheus HTTP server
-    utility.metrics(port)
+    metrics_utility.metrics(port)
 
     # Initialize state tracking
     all_known_devices = {}  # Tracks all devices ever seen (for discovery mode)

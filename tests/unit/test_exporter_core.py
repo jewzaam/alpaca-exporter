@@ -16,9 +16,10 @@ import pytest
 # Add src directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
+import metrics_utility
+
 import constants
 import exporter_core
-import utility
 
 
 class TestParseConfigDefaults(unittest.TestCase):
@@ -178,20 +179,11 @@ class TestGetManualDeviceList(unittest.TestCase):
 class TestCleanupStaleMetrics(unittest.TestCase):
     """Test stale metric cleanup"""
 
-    def setUp(self):
-        """Clear prometheus registry and utility state before each test"""
-        import prometheus_client
-
-        prometheus_client.REGISTRY._collector_to_names.clear()
-        prometheus_client.REGISTRY._names_to_collectors.clear()
-        utility.gauges = {}
-        utility.counters = {}
-
     def test_cleanup_removes_stale_metrics(self):
         """Should remove metrics that were in previous cycle but not current"""
         # Create some metrics in "previous" cycle
-        utility.set("alpaca_device_connected", 1, {"device_type": "telescope", "device_number": 0})
-        utility.set("alpaca_telescope_altitude", 45.0, {"device_type": "telescope", "device_number": 0, "name": "Test"})
+        metrics_utility.set("alpaca_device_connected", 1, {"device_type": "telescope", "device_number": 0})
+        metrics_utility.set("alpaca_telescope_altitude", 45.0, {"device_type": "telescope", "device_number": 0, "name": "Test"})
 
         metrics_previous = [
             ["alpaca_device_connected", {"device_type": "telescope", "device_number": 0}],
@@ -203,8 +195,8 @@ class TestCleanupStaleMetrics(unittest.TestCase):
             ["alpaca_device_connected", {"device_type": "telescope", "device_number": 0}],
         ]
 
-        # Should call utility.set with None for stale metric
-        with patch("utility.set") as mock_set:
+        # Should call metrics_utility.set with None for stale metric
+        with patch("exporter_core.metrics_utility.set") as mock_set:
             exporter_core.cleanup_stale_metrics(metrics_previous, metrics_current)
 
             # Should be called once to clear the stale altitude metric
@@ -226,10 +218,10 @@ class TestCleanupStaleMetrics(unittest.TestCase):
             ["alpaca_telescope_altitude", {"device_type": "telescope", "device_number": 0, "name": "Test"}],
         ]
 
-        with patch("utility.set") as mock_set:
+        with patch("exporter_core.metrics_utility.set") as mock_set:
             exporter_core.cleanup_stale_metrics(metrics_previous, metrics_current)
 
-            # Should not call utility.set at all
+            # Should not call metrics_utility.set at all
             mock_set.assert_not_called()
 
     def test_cleanup_empty_previous(self):
@@ -239,10 +231,10 @@ class TestCleanupStaleMetrics(unittest.TestCase):
             ["alpaca_device_connected", {"device_type": "telescope", "device_number": 0}],
         ]
 
-        with patch("utility.set") as mock_set:
+        with patch("exporter_core.metrics_utility.set") as mock_set:
             exporter_core.cleanup_stale_metrics(metrics_previous, metrics_current)
 
-            # Should not call utility.set
+            # Should not call metrics_utility.set
             mock_set.assert_not_called()
 
     def test_cleanup_multiple_stale_metrics(self):
@@ -258,10 +250,10 @@ class TestCleanupStaleMetrics(unittest.TestCase):
             ["alpaca_device_connected", {"device_type": "telescope", "device_number": 0}],
         ]
 
-        with patch("utility.set") as mock_set:
+        with patch("exporter_core.metrics_utility.set") as mock_set:
             exporter_core.cleanup_stale_metrics(metrics_previous, metrics_current)
 
-            # Should call utility.set 3 times for 3 stale metrics
+            # Should call metrics_utility.set 3 times for 3 stale metrics
             self.assertEqual(mock_set.call_count, 3)
 
     def test_cleanup_with_different_labels(self):
@@ -275,7 +267,7 @@ class TestCleanupStaleMetrics(unittest.TestCase):
             ["alpaca_device_connected", {"device_type": "telescope", "device_number": 0}],
         ]
 
-        with patch("utility.set") as mock_set:
+        with patch("exporter_core.metrics_utility.set") as mock_set:
             exporter_core.cleanup_stale_metrics(metrics_previous, metrics_current)
 
             # Should only clear device_number=1

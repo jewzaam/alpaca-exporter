@@ -18,23 +18,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 class TestGetValue(unittest.TestCase):
     """Test the getValue function"""
 
-    def setUp(self):
-        """Clear prometheus registry before each test"""
-        import prometheus_client
-
-        # Clear the default registry
-        prometheus_client.REGISTRY._collector_to_names.clear()
-        prometheus_client.REGISTRY._names_to_collectors.clear()
-
     @patch("requests.get")
     def test_get_value_success(self, mock_get):
         """Test successful value retrieval from Alpaca API"""
         # Import here to ensure path is set
-        import utility
-
-        # Clear prometheus metrics to avoid conflicts between tests
-        utility.gauges = {}
-        utility.counters = {}
 
         # Mock a successful Alpaca API response
         mock_response = Mock()
@@ -74,11 +61,6 @@ class TestGetValue(unittest.TestCase):
         ErrorNumber 1024 indicates an ASCOM driver doesn't support a specific attribute.
         This should return None and NOT increment error counters (it's not a real error).
         """
-        import utility
-
-        # Clear prometheus metrics to avoid conflicts between tests
-        utility.gauges = {}
-        utility.counters = {}
 
         # Mock an Alpaca API response with error 1024 (not implemented)
         mock_response = Mock()
@@ -113,11 +95,6 @@ class TestGetValue(unittest.TestCase):
         for some attributes (connected, cooleron, etc.), which must be converted
         to integers (True -> 1, False -> 0).
         """
-        import utility
-
-        # Clear prometheus metrics to avoid conflicts between tests
-        utility.gauges = {}
-        utility.counters = {}
 
         # Mock an Alpaca API response with a boolean value
         mock_response = Mock()
@@ -156,11 +133,6 @@ class TestDiscoverDevices(unittest.TestCase):
         that the discovery function correctly parses the response and organizes
         devices by type.
         """
-        import utility
-
-        # Clear prometheus metrics to avoid conflicts between tests
-        utility.gauges = {}
-        utility.counters = {}
 
         # Mock Alpaca Management API response with multiple device types
         mock_response = Mock()
@@ -207,11 +179,6 @@ class TestDiscoverDevices(unittest.TestCase):
         This can happen at startup before devices are configured, or in test
         environments. The exporter should handle this gracefully.
         """
-        import utility
-
-        # Clear prometheus metrics to avoid conflicts between tests
-        utility.gauges = {}
-        utility.counters = {}
 
         # Mock Alpaca Management API response with empty device list
         mock_response = Mock()

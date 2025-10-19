@@ -19,27 +19,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 class TestGetValueCached(unittest.TestCase):
     """Test the cached version of getValue"""
 
-    def setUp(self):
-        """Clear prometheus registry and cache before each test"""
-        import prometheus_client
-
-        prometheus_client.REGISTRY._collector_to_names.clear()
-        prometheus_client.REGISTRY._names_to_collectors.clear()
-
-        import utility
-
-        utility.gauges = {}
-        utility.counters = {}
-
     @patch("requests.get")
     def test_get_value_cached_makes_request_on_first_call(self, mock_get):
         """Test that first call to cached getValue makes HTTP request"""
         from importlib import import_module
-
-        import utility
-
-        utility.gauges = {}
-        utility.counters = {}
 
         alpaca_exporter = import_module("alpaca-exporter")
 
@@ -66,11 +49,6 @@ class TestGetValueCached(unittest.TestCase):
     def test_get_value_cached_uses_cache_on_second_call(self, mock_get):
         """Test that second call within TTL uses cache"""
         from importlib import import_module
-
-        import utility
-
-        utility.gauges = {}
-        utility.counters = {}
 
         alpaca_exporter = import_module("alpaca-exporter")
 
@@ -112,13 +90,6 @@ class TestGetValueCached(unittest.TestCase):
 
 class TestDebugFunction(unittest.TestCase):
     """Test the debug() logging function"""
-
-    def setUp(self):
-        """Clear prometheus registry before each test"""
-        import prometheus_client
-
-        prometheus_client.REGISTRY._collector_to_names.clear()
-        prometheus_client.REGISTRY._names_to_collectors.clear()
 
     def test_debug_prints_when_enabled(self):
         """Test that debug() prints messages when DEBUG is True"""
@@ -163,23 +134,11 @@ class TestDebugFunction(unittest.TestCase):
 class TestDiscoverDevicesSkippedMessage(unittest.TestCase):
     """Test that discoverDevices logs SKIPPED for unsupported device types"""
 
-    def setUp(self):
-        """Clear prometheus registry before each test"""
-        import prometheus_client
-
-        prometheus_client.REGISTRY._collector_to_names.clear()
-        prometheus_client.REGISTRY._names_to_collectors.clear()
-
     @patch("requests.get")
     @patch("builtins.print")
     def test_discover_skips_unsupported_device_with_verbose(self, mock_print, mock_get):
         """Test that unsupported devices log SKIPPED message in verbose mode"""
         from importlib import import_module
-
-        import utility
-
-        utility.gauges = {}
-        utility.counters = {}
 
         alpaca_exporter = import_module("alpaca-exporter")
 
@@ -216,11 +175,6 @@ class TestDiscoverDevicesSkippedMessage(unittest.TestCase):
     def test_discover_silent_skip_without_verbose(self, mock_print, mock_get):
         """Test that unsupported devices are silently skipped when verbose=False"""
         from importlib import import_module
-
-        import utility
-
-        utility.gauges = {}
-        utility.counters = {}
 
         alpaca_exporter = import_module("alpaca-exporter")
 
