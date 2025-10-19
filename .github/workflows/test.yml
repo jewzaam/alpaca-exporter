@@ -3,9 +3,8 @@ name: Test
 
 on:
   pull_request:
-    branches: [ main, auto-mode ]
   push:
-    branches: [ main, auto-mode ]
+    branches: [ main ]
 
 jobs:
   test:
