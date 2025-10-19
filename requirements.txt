@@ -1,7 +1,5 @@
 argparse
 pyyaml
-pyjson
 cachetools
-httpimport
 requests
 prometheus-client

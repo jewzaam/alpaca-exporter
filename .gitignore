@@ -1,0 +1,27 @@
+# Python artifacts
+__pycache__/
+.venv/
+venv/
+
+# Obsidian artifacts
+.obsidian/
+
+# Build artifacts
+*.egg-info/
+dist/
+build/
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+.coverage-percentage
+.mypy_cache/
+.ruff_cache/
+.tox/
+
+# Coverage artifacts
+.coverage-percentage
+.coverage
+coverage.xml
+htmlcov/
