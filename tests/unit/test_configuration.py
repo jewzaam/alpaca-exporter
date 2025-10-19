@@ -21,13 +21,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 class TestMissingConfigurationFiles(unittest.TestCase):
     """Test behavior when configuration files are missing"""
 
-    def setUp(self):
-        """Clear prometheus registry before each test"""
-        import prometheus_client
-
-        prometheus_client.REGISTRY._collector_to_names.clear()
-        prometheus_client.REGISTRY._names_to_collectors.clear()
-
     def test_missing_config_file_in_discovery_mode(self):
         """
         Test that exporter exits with error when discovered device lacks config file.
@@ -192,13 +185,6 @@ class TestConfigurationLoading(unittest.TestCase):
 class TestConfigurationFileAccess(unittest.TestCase):
     """Test accessing configuration during device processing"""
 
-    def setUp(self):
-        """Clear prometheus registry before each test"""
-        import prometheus_client
-
-        prometheus_client.REGISTRY._collector_to_names.clear()
-        prometheus_client.REGISTRY._names_to_collectors.clear()
-
     def test_main_loop_checks_config_exists(self):
         """
         Test that main loop verifies configuration exists before processing device.
@@ -270,13 +256,6 @@ class TestConfigurationFileAccess(unittest.TestCase):
 class TestRuntimeDeviceDiscovery(unittest.TestCase):
     """Test runtime device discovery (new devices added while running)"""
 
-    def setUp(self):
-        """Clear prometheus registry before each test"""
-        import prometheus_client
-
-        prometheus_client.REGISTRY._collector_to_names.clear()
-        prometheus_client.REGISTRY._names_to_collectors.clear()
-
     @patch("requests.get")
     def test_new_device_discovered_during_runtime(self, mock_get):
         """
@@ -291,11 +270,6 @@ class TestRuntimeDeviceDiscovery(unittest.TestCase):
         From requirements: "New devices added during runtime are automatically discovered"
         """
         from importlib import import_module
-
-        import utility
-
-        utility.gauges = {}
-        utility.counters = {}
 
         alpaca_exporter = import_module("alpaca-exporter")
 

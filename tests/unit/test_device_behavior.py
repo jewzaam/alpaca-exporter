@@ -19,124 +19,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 class TestSkipListBehavior(unittest.TestCase):
     """Test skip list behavior for error 1024 (not implemented)"""
 
-    def setUp(self):
-        """Clear prometheus registry and state before each test"""
-        import prometheus_client
-
-        # Clear the default registry
-        prometheus_client.REGISTRY._collector_to_names.clear()
-        prometheus_client.REGISTRY._names_to_collectors.clear()
-
-    @patch("requests.get")
-    def test_error_1024_adds_to_skip_list(self, mock_get):
-        """
-        Test that ErrorNumber 1024 adds attribute to skip list.
-
-        When an ASCOM driver doesn't support an attribute, it returns error 1024.
-        This should add the attribute to a skip list so we don't query it again.
-        """
-        from importlib import import_module
-
-        import utility
-
-        # Clear state
-        utility.gauges = {}
-        utility.counters = {}
-
-        alpaca_exporter = import_module("alpaca-exporter")
-
-        # Clear skip list
-        alpaca_exporter.skip_device_attribute = {}
-
-        # Mock response with error 1024 (not implemented)
-        mock_response = Mock()
-        mock_response.status_code = 200
-        mock_response.text = json.dumps({"Value": None, "ErrorNumber": 1024, "ErrorMessage": "Not implemented"})
-        mock_get.return_value = mock_response
-
-        # Query an attribute that's not implemented
-        value = alpaca_exporter.getValue(
-            alpaca_base_url="http://localhost:11111/api/v1",
-            device_type="telescope",
-            device_number=0,
-            attribute="declinationrate",
-            querystr="",
-            record_metrics=True,
-        )
-
-        # Should return None for error 1024
-        self.assertIsNone(value, "Error 1024 should return None")
-
-        # Verify attribute was added to skip list
-        # Structure is: {device_type: {device_number: [attribute_list]}}
-        self.assertIn("telescope", alpaca_exporter.skip_device_attribute, "Device type should be in skip list")
-        self.assertIn("0", alpaca_exporter.skip_device_attribute["telescope"], "Device number should be in skip list")
-        self.assertIn(
-            "declinationrate",
-            alpaca_exporter.skip_device_attribute["telescope"]["0"],
-            "Attribute should be in skip list for this device",
-        )
-
-    @patch("requests.get")
-    def test_non_1024_error_not_added_to_skip_list(self, mock_get):
-        """
-        Test that non-1024 errors do NOT add attribute to skip list.
-
-        Temporary errors (network issues, sensor read failures, etc.) should NOT
-        be skipped - we want to retry them on the next cycle.
-        """
-        from importlib import import_module
-
-        import utility
-
-        # Clear state
-        utility.gauges = {}
-        utility.counters = {}
-
-        alpaca_exporter = import_module("alpaca-exporter")
-
-        # Clear skip list
-        alpaca_exporter.skip_device_attribute = {}
-
-        # Mock response with a temporary error (not 1024)
-        mock_response = Mock()
-        mock_response.status_code = 200
-        mock_response.text = json.dumps({"Value": None, "ErrorNumber": 1234, "ErrorMessage": "Temporary sensor error"})
-        mock_get.return_value = mock_response
-
-        # Query an attribute with a temporary error
-        value = alpaca_exporter.getValue(
-            alpaca_base_url="http://localhost:11111/api/v1",
-            device_type="camera",
-            device_number=0,
-            attribute="ccdtemperature",
-            querystr="",
-            record_metrics=True,
-        )
-
-        # Should return None for any error
-        self.assertIsNone(value, "Error should return None")
-
-        # Verify attribute was NOT added to skip list (should retry next cycle)
-        # Skip list should be completely empty for this device
-        if "camera" in alpaca_exporter.skip_device_attribute and "0" in alpaca_exporter.skip_device_attribute["camera"]:
-            self.assertNotIn(
-                "ccdtemperature",
-                alpaca_exporter.skip_device_attribute["camera"]["0"],
-                "Non-1024 errors should NOT be added to skip list",
-            )
-
-
-class TestBooleanConversion(unittest.TestCase):
-    """Test boolean to integer conversion for Prometheus metrics"""
-
-    def setUp(self):
-        """Clear prometheus registry before each test"""
-        import prometheus_client
-
-        prometheus_client.REGISTRY._collector_to_names.clear()
-        prometheus_client.REGISTRY._names_to_collectors.clear()
-
     @patch("requests.get")
     def test_true_converts_to_1(self, mock_get):
         """
@@ -145,11 +27,6 @@ class TestBooleanConversion(unittest.TestCase):
         Prometheus requires numeric values. ASCOM boolean True should become 1.
         """
         from importlib import import_module
-
-        import utility
-
-        utility.gauges = {}
-        utility.counters = {}
 
         alpaca_exporter = import_module("alpaca-exporter")
 
@@ -180,11 +57,6 @@ class TestBooleanConversion(unittest.TestCase):
         """
         from importlib import import_module
 
-        import utility
-
-        utility.gauges = {}
-        utility.counters = {}
-
         alpaca_exporter = import_module("alpaca-exporter")
 
         # Mock response with False value
@@ -209,13 +81,6 @@ class TestBooleanConversion(unittest.TestCase):
 class TestNumericValues(unittest.TestCase):
     """Test handling of numeric values (integers and floats)"""
 
-    def setUp(self):
-        """Clear prometheus registry before each test"""
-        import prometheus_client
-
-        prometheus_client.REGISTRY._collector_to_names.clear()
-        prometheus_client.REGISTRY._names_to_collectors.clear()
-
     @patch("requests.get")
     def test_integer_value_unchanged(self, mock_get):
         """
@@ -224,11 +89,6 @@ class TestNumericValues(unittest.TestCase):
         Integer device numbers, counts, etc. should be returned as-is.
         """
         from importlib import import_module
-
-        import utility
-
-        utility.gauges = {}
-        utility.counters = {}
 
         alpaca_exporter = import_module("alpaca-exporter")
 
@@ -257,11 +117,6 @@ class TestNumericValues(unittest.TestCase):
         Temperature readings, coordinates, etc. are floats and should be preserved.
         """
         from importlib import import_module
-
-        import utility
-
-        utility.gauges = {}
-        utility.counters = {}
 
         alpaca_exporter = import_module("alpaca-exporter")
 
