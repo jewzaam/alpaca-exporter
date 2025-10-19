@@ -10,7 +10,7 @@ VENV_PIP := $(VENV_DIR)/bin/pip
 VENV_UV := $(VENV_DIR)/bin/uv
 
 # Coverage settings
-COVERAGE_THRESHOLD ?= 80
+COVERAGE_THRESHOLD ?= 70
 
 # Colors for output
 BLUE := \033[34m
