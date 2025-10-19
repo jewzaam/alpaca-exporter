@@ -1,5 +1,4 @@
 import argparse
-import copy
 import json
 import os
 import time
@@ -8,20 +7,9 @@ import requests
 import yaml
 from cachetools import TTLCache, cached
 
+import constants
+import exporter_core
 import utility
-
-device_types = [
-    "camera",
-    "covercalibrator",
-    "dome",
-    "filterwheel",
-    "focuser",
-    "observingconditions",
-    "rotator",
-    "safetymonitor",
-    "switch",
-    "telescope",
-]
 
 # general configuration, key is 'device type' (i.e. telescope)
 configurations = {}
@@ -99,7 +87,7 @@ def discoverDevices(alpaca_base_url, verbose=True):
             unique_id = device.get("UniqueID", "")
 
             # Only add devices of supported types
-            if device_type in device_types:
+            if device_type in constants.DEVICE_TYPES:
                 if device_type not in discovered:
                     discovered[device_type] = []
                 if device_number not in discovered[device_type]:
@@ -172,287 +160,102 @@ def getValue(alpaca_base_url, device_type, device_number, attribute, querystr=""
     return value
 
 
-if __name__ == "__main__":
+def main():
+    """Main entry point for the exporter application."""
     parser = argparse.ArgumentParser(description="Export logs as prometheus metrics.")
-    parser.add_argument("--port", type=int, help="port to expose metrics on, default: 9876")
-    parser.add_argument("--alpaca_base_url", type=str, help="base alpaca v1 api (trailing slash will be stripped), default: http://127.0.0.1:11111/api/v1")
-    parser.add_argument("--refresh_rate", type=int, help="seconds between refreshing metrics, default: 5")
+    parser.add_argument("--port", type=int, help=f"port to expose metrics on, default: {constants.DEFAULT_PORT}")
+    parser.add_argument("--alpaca_base_url", type=str, help=f"base alpaca v1 api, default: {constants.DEFAULT_ALPACA_BASE_URL}")
+    parser.add_argument("--refresh_rate", type=int, help=f"seconds between refreshing metrics, default: {constants.DEFAULT_REFRESH_RATE}")
     parser.add_argument("--discover", action="store_true", help="automatically discover all configured devices via Alpaca Management API")
 
     # add args for each supported device type
-    for device_type in device_types:
+    for device_type in constants.DEVICE_TYPES:
         parser.add_argument(f"--{device_type}", type=int, action="append", help=f"{device_type} device number")
 
     # treat args parsed as a dictionary
     args = vars(parser.parse_args())
 
-    alpaca_base_url = "http://127.0.0.1:11111/api/v1"
-    if args.get("alpaca_base_url"):
-        alpaca_base_url = args["alpaca_base_url"].rstrip("/")
+    # Parse configuration with defaults
+    alpaca_base_url, refresh_rate, port = exporter_core.parse_config_defaults(args)
 
-    refresh_rate = 5
-    if args.get("refresh_rate"):
-        refresh_rate = args["refresh_rate"]
-
-    port = 9876
-    if args.get("port"):
-        port = args["port"]
-
-    # build array of device numbers for each supported device
-    # either via discovery or from user-provided arguments
-    use_discovery = args.get("discover")
-    has_explicit_devices = any(args.get(dt) for dt in device_types)
-
-    # Validate mutually exclusive modes
-    if use_discovery and has_explicit_devices:
-        print("ERROR: Cannot use --discover with explicit device specifications")
-        print("Usage: Either use '--discover' OR specify devices (e.g., '--telescope 0 --camera 0')")
+    # Check if using discovery mode
+    try:
+        use_discovery = exporter_core.is_discover_mode(args)
+    except ValueError as e:
+        print(f"ERROR: {e}")
         exit(1)
 
-    if not use_discovery and not has_explicit_devices:
-        print("ERROR: Must specify either --discover or at least one device")
-        print("Usage: '--discover' OR explicit devices (e.g., '--telescope 0 --camera 0')")
-        exit(1)
-
-    if use_discovery:
-        print("Auto-discovering devices via Alpaca Management API...")
-        devices = discoverDevices(alpaca_base_url)
-        if len(devices) == 0:
-            print("WARNING: No devices discovered. Retrying...")
-    else:
-        # verify user device numbers provided
-        done = False
-        while not done:
-            try:
-                for device_type in device_types:
-                    if args[device_type]:
-                        devices[device_type] = args[device_type]
-                        for device_number in devices[device_type]:
-                            name = getValue(alpaca_base_url, device_type, device_number, "name", "")
-                            if name:
-                                print(f"SUCCESS: found {device_type}/{device_number}")
-                            else:
-                                print(f"FAILURE: unable to find {device_type}/{device_number}")
-                done = True
-            except Exception as e:
-                print("EXCEPTION")
-                print(e)
-
-            time.sleep(int(refresh_rate))
-
-    if len(devices) == 0:
-        print(f"ERROR: no devices configured, must supply at least one of: {device_types} or use --discover")
-        os._exit(-1)
-
-    # Track all devices we've ever seen (for marking as disconnected when they disappear)
-    # Initialize with the devices we found at startup
-    all_known_devices = {}
-    if use_discovery:
-        for device_type in devices.keys():
-            all_known_devices[device_type] = devices[device_type].copy()
-
-    # Track device connection status to detect state changes
-    # Key format: "device_type/device_number", Value: True (connected) or False (disconnected)
-    device_status = {}
-
+    # Load device configurations
     loadConfigurations("config/")
 
-    # verify user input for devices
-
-    # Start up the server to expose the metrics.
+    # Start Prometheus HTTP server
     utility.metrics(port)
 
-    # collect metric name and array of labels from this and previous iterations (metrics_previous, metrics_current)
-    # will compare w/ the previous iteration to see if we need to wipe any state
+    # Initialize state tracking
+    all_known_devices = {}  # Tracks all devices ever seen (for discovery mode)
+    device_status = {}  # Tracks connection status: "device_type/device_number" -> True/False/None
     metrics_previous = []
+
+    # Main execution loop - handles both startup and runtime uniformly
     while True:
         try:
-            # Re-run discovery if in discovery mode to detect new/removed devices
+            # Get current device list based on mode
             if use_discovery:
-                discovered_devices = discoverDevices(alpaca_base_url, verbose=False)
+                # Discovery mode: query Alpaca Management API
+                devices = discoverDevices(alpaca_base_url, verbose=False)
 
-                # Update all_known_devices with newly discovered devices
-                for device_type in discovered_devices.keys():
+                # Track newly discovered devices
+                for device_type in devices.keys():
                     if device_type not in all_known_devices:
                         all_known_devices[device_type] = []
-                    for device_number in discovered_devices[device_type]:
+                    for device_number in devices[device_type]:
                         if device_number not in all_known_devices[device_type]:
                             all_known_devices[device_type].append(device_number)
                             print(f"NEW DEVICE: {device_type}/{device_number} added to monitoring")
+            else:
+                # Manual mode: use configured device list
+                devices = exporter_core.get_manual_device_list(args)
 
-                # Update devices to currently discovered ones
-                devices = discovered_devices
+                # In manual mode, all configured devices are "known"
+                if not all_known_devices:
+                    all_known_devices = {dt: devices[dt].copy() for dt in devices.keys()}
 
             metrics_current = []
 
-            # First, handle all known devices (including ones that might be disconnected)
-            for device_type in all_known_devices.keys() if use_discovery else devices.keys():
-                # Get the list of device numbers to check
-                device_numbers_to_check = all_known_devices[device_type] if use_discovery else devices[device_type]
+            # Process devices based on mode
+            device_list_to_process = all_known_devices if use_discovery else devices
 
-                for device_number in device_numbers_to_check:
-                    c = configurations[device_type]
+            for device_type in device_list_to_process.keys():
+                device_numbers = all_known_devices[device_type] if use_discovery else devices[device_type]
 
-                    if "metrics" not in c:
-                        # no metrics, no point processing anything, go to next device
-                        continue
-
-                    # collect labels for device this iteration
-                    labels = {
-                        "device_type": device_type,
-                        "device_number": device_number,
-                    }
-
-                    # Track device status for state change detection
-                    device_key = f"{device_type}/{device_number}"
-                    previous_status = device_status.get(device_key)
-
-                    # Check if device is in currently discovered devices (for discovery mode)
-                    # or verify it's reachable (for manual mode or as fallback)
-                    is_currently_discovered = True
-                    if use_discovery:
-                        is_currently_discovered = device_type in devices and device_number in devices[device_type]
-
-                    # If not discovered, mark as disconnected (only if previously connected)
-                    if not is_currently_discovered:
-                        if previous_status is True:
-                            print(f"DISCONNECTED: {device_type}/{device_number} no longer discovered")
-                            # Set to 0 so alerts can fire, and keep in metrics_current for tracking
-                            utility.set("alpaca_device_connected", 0, labels)
-                            metrics_current.append(["alpaca_device_connected", copy.deepcopy(labels)])
-                        device_status[device_key] = False
-                        continue
-
-                    # Verify this is a valid device by getting its name
-                    # Only record metrics if device has been connected before
-                    should_record = previous_status is True
-                    name = getValue(alpaca_base_url, device_type, device_number, "name", "", should_record)
-                    if not name:
-                        if previous_status is True:
-                            print(f"DISCONNECTED: {device_type}/{device_number} not responding")
-                            # Set to 0 so alerts can fire, and keep in metrics_current for tracking
-                            utility.set("alpaca_device_connected", 0, labels)
-                            metrics_current.append(["alpaca_device_connected", copy.deepcopy(labels)])
-                        device_status[device_key] = False
-                        continue
-                    else:
-                        # Device is connected - create/update metrics
-                        utility.set("alpaca_device_connected", 1, labels)
-                        metrics_current.append(["alpaca_device_connected", copy.deepcopy(labels)])
-
-                        # Print CONNECTED when device becomes available (transitioning from any non-connected state)
-                        if previous_status is not True:
-                            print(f"CONNECTED: {device_type}/{device_number}")
-                            # Reset skip list on connect (new connection may have different driver/capabilities)
-                            skip_device_attribute.setdefault(device_type, {})[str(device_number)] = []
-                        device_status[device_key] = True
-                        labels.update({"name": name})
-                        utility.set("alpaca_device_name", 1, labels)
-                        metrics_current.append(["alpaca_device_name", copy.deepcopy(labels)])
-
-                    metric_prefix = ""
-                    if "metric_prefix" in c:
-                        metric_prefix = c["metric_prefix"]
-
-                    # use inner functions to encapsulate scope and eliminate variable scope issues
-
-                    def global_labels():
-                        if "global" in configurations and "labels" in configurations["global"]:
-                            for l in configurations["global"]["labels"]:
-                                alpaca_name = l["alpaca_name"]
-                                label_name = alpaca_name
-                                if "label_name" in l:
-                                    label_name = l["label_name"]
-
-                                if alpaca_name == "name":
-                                    # already pulled this early on
-                                    label_value = name
-                                elif "cached" in l and l["cached"] > 0:
-                                    label_value = getValueCached(alpaca_base_url, device_type, device_number, alpaca_name)
-                                else:
-                                    label_value = getValue(alpaca_base_url, device_type, device_number, alpaca_name)
-
-                                if label_name and label_value:
-                                    labels[label_name] = label_value
-
-                    # device specific labels
-                    def device_labels(querystr=""):
-                        if "labels" in c:
-                            for l in c["labels"]:
-                                alpaca_name = l["alpaca_name"]
-                                label_name = alpaca_name
-                                if "label_name" in l:
-                                    label_name = l["label_name"]
-
-                                if alpaca_name == "name":
-                                    # already pulled this early on
-                                    label_value = name
-                                if "cached" in l and l["cached"] > 0:
-                                    label_value = getValueCached(alpaca_base_url, device_type, device_number, alpaca_name, querystr)
-                                else:
-                                    label_value = getValue(alpaca_base_url, device_type, device_number, alpaca_name, querystr)
-
-                                if label_name and label_value:
-                                    labels[label_name] = label_value
-
-                    # process each metric
-                    def device_metrcis(querystr=""):
-                        for m in c["metrics"]:
-                            alpaca_name = m["alpaca_name"]
-                            if "metric_name" not in m:
-                                metric_name = f"{metric_prefix}{alpaca_name}"
-                            else:
-                                metric_name = f"{metric_prefix}{m['metric_name']}"
-
-                            if "cached" in m and m["cached"] > 0:
-                                metric_value = getValueCached(alpaca_base_url, device_type, device_number, alpaca_name, querystr)
-                            else:
-                                metric_value = getValue(alpaca_base_url, device_type, device_number, alpaca_name, querystr)
-
-                            # if metric_value is None we'll try to clear it
-                            # if it's none but there is no prior value it will fail, ignore this
-                            try:
-                                utility.set(metric_name, metric_value, labels)
-                                metrics_current.append([metric_name, copy.deepcopy(labels)])
-                            except:
-                                pass
-
-                    # get global labels
-                    global_labels()
-
-                    # SWITCH is a special device with an "id" query param.
-                    if device_type == "switch":
-                        # ids will be number of switch devices.
-                        # id is 0 based, but range excludes the upper boundary.
-                        # so using ids as is and upper bounds excluded is perfect.
-                        ids = getValueCached(alpaca_base_url, device_type, device_number, "maxswitch")
-                        for id in range(ids):
-                            # also set 'id' on labels so it creates a unique key for metrics
-                            labels["id"] = id
-                            device_labels(f"id={id}")
-                            device_metrcis(f"id={id}")
-                    else:
-                        # all other devices do not have query params
-                        device_labels()
-                        device_metrcis()
+                for device_number in device_numbers:
+                    # Process this device and collect metrics
+                    device_metrics = exporter_core.process_device(
+                        device_type,
+                        device_number,
+                        configurations,
+                        alpaca_base_url,
+                        use_discovery,
+                        devices,
+                        device_status,
+                        skip_device_attribute,
+                        getValue,
+                        getValueCached,
+                    )
+                    metrics_current.extend(device_metrics)
 
         except Exception as e:
-            print("EXCEPTION")
-            print(e)
+            print(f"EXCEPTION: {e}")
 
-        # handle cleanup of metrics.  this is the case when something stops reporting and we do not want stale metric.
+        # Clean up stale metrics
         try:
-            for m in metrics_previous:
-                # if the cache has a value we didn't just collect we must remove the metric
-                if m not in metrics_current:
-                    metric_name = m[0]
-                    labels = m[1]  # type: ignore[assignment]
-                    debug(f"DEBUG: removing metric.  metric_name={metric_name}, labels={labels}")
-                    # wipe the metric
-                    utility.set(metric_name, None, labels)
+            exporter_core.cleanup_stale_metrics(metrics_previous, metrics_current)
             metrics_previous = metrics_current
         except Exception as e:
-            print("EXCEPTION")
-            print(e)
+            print(f"EXCEPTION: {e}")
 
         time.sleep(int(refresh_rate))
+
+
+if __name__ == "__main__":
+    main()

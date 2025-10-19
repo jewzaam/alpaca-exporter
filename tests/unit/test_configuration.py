@@ -105,10 +105,12 @@ class TestConfigurationLoading(unittest.TestCase):
         """
         Test that configuration files exist for all supported device types.
 
-        All device types in device_types list should have corresponding
+        All device types in DEVICE_TYPES list should have corresponding
         config/{device_type}.yaml files.
         """
         from importlib import import_module
+
+        import constants
 
         alpaca_exporter = import_module("alpaca-exporter")
 
@@ -118,9 +120,7 @@ class TestConfigurationLoading(unittest.TestCase):
         alpaca_exporter.loadConfigurations(str(config_path))
 
         # Check that all device types have configurations
-        device_types = alpaca_exporter.device_types
-
-        for device_type in device_types:
+        for device_type in constants.DEVICE_TYPES:
             self.assertIn(device_type, alpaca_exporter.configurations, f"Configuration file should exist for {device_type}")
 
     def test_global_configuration_exists(self):

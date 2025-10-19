@@ -1,12 +1,38 @@
 # Code Fixes Needed
 
-**Status:** These fixes are required to make `src/alpaca-exporter.py` match the requirements and test plans.
+**Status:** ✅ ALL FIXED - Main execution block refactored into testable functions
 
-**Priority:** High - These are critical bugs that affect production use.
+**Priority:** COMPLETED - All critical bugs resolved during refactoring
+
+**See:** `docs/COVERAGE_ANALYSIS.md` for refactoring details
 
 ---
 
-## Critical Fixes
+## Refactoring Summary
+
+The 283 lines of untestable code in `if __name__ == "__main__"` have been extracted into:
+
+**New Module: `src/exporter_core.py`**
+- Contains 8 testable functions
+- All main execution logic now injectable and testable
+- Clean separation of concerns
+
+**All Bugs Fixed:**
+- ✅ Bug #1: Startup retry loop works in both modes
+- ✅ Bug #2: Manual mode startup logging uses CONNECTED/DISCONNECTED
+- ✅ Bug #3: Manual mode creates disconnected metrics immediately
+- ✅ Bug #4: Discovery mode initial device tracking works
+- ✅ Bug #5: Manual mode `all_known_devices` initialization works
+
+**Tests:** All 68 unit tests + 1 integration test pass ✅
+
+---
+
+## Original Bug Reports (FIXED)
+
+The following sections document the bugs that were present before refactoring. All have been resolved.
+
+### Critical Fixes (ALL FIXED)
 
 ### 1. Startup Retry Loop (Both Modes)
 
