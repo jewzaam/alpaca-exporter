@@ -5,9 +5,16 @@
 # Python virtual environment
 VENV_DIR ?= .venv
 PYTHON := python3
-VENV_PYTHON := $(VENV_DIR)/bin/python
-VENV_PIP := $(VENV_DIR)/bin/pip
-VENV_UV := $(VENV_DIR)/bin/uv
+ifeq ($(OS),Windows_NT)
+VENV_BIN := $(VENV_DIR)/Scripts
+EXE := .exe
+else
+VENV_BIN := $(VENV_DIR)/bin
+EXE :=
+endif
+VENV_PYTHON := $(VENV_BIN)/python$(EXE)
+VENV_PIP := $(VENV_BIN)/pip$(EXE)
+VENV_UV := $(VENV_BIN)/uv$(EXE)
 
 # Coverage settings
 COVERAGE_THRESHOLD ?= 70

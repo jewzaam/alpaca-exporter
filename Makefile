@@ -11,7 +11,9 @@ include make/test.mk
 include make/lint.mk
 
 .DEFAULT_GOAL := help
-.PHONY: help
+.PHONY: help check
+
+check: lint coverage ## Run full quality gate (lint, typecheck, tests, coverage)
 
 help: ## Display this help message
 	@echo "Alpaca Exporter"
