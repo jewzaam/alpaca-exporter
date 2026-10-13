@@ -81,6 +81,7 @@ ignore = [
     "E501",     # Line too long (handled by formatter)
     "S101",     # Use of assert
     "PLR0913",  # Too many arguments
+    "PLR0917",  # Too many positional arguments
     "PLR0912",  # Too many branches
     "PLR0915",  # Too many statements
     "PLW0603",  # Global statement usage
