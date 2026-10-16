@@ -82,9 +82,9 @@ groups:
     - record: device:switch:was_connected
       expr: max_over_time(alpaca_device_connected{device_type="switch"}[30m])
     - record: device:switch:DewA
-      expr: alpaca_switch_switchvalue{switchname="Dew A"} OR on(host,instance,name) alpaca_switch_switchvalue{switchname=~"PWM.*Imaging"}
+      expr: alpaca_switch_switchvalue{switchname="Dew A"} OR on(host,instance,name) (alpaca_switch_switchvalue{switchname=~"PWM.*Imaging"}/2.54)
     - record: device:switch:DewB
-      expr: alpaca_switch_switchvalue{switchname="Dew B"} OR on(host,instance,name) alpaca_switch_switchvalue{switchname=~"PWM.*Guiding"}
+      expr: alpaca_switch_switchvalue{switchname="Dew B"} OR on(host,instance,name) (alpaca_switch_switchvalue{switchname=~"PWM.*Guiding"}/2.54)
     - record: device:switch:Voltage
       expr: alpaca_switch_switchvalue{switchname=~"(?i).*voltage.*"}
     - record: device:switch:Current
